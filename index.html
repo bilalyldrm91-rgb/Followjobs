@@ -310,6 +310,7 @@ async function aiResearch(taskId, title) {
   const loadEl = document.getElementById('ai-load-'+taskId);
   const resEl = document.getElementById('ai-res-'+taskId);
   if (!loadEl || !resEl) return;
+
   loadEl.style.display = 'block';
   resEl.style.display = 'none';
   resEl.innerHTML = '';
@@ -324,19 +325,6 @@ async function aiResearch(taskId, title) {
     const data = await res.json();
     loadEl.style.display = 'none';
     resEl.innerHTML = data.text.replace(/\n/g,'<br>');
-    resEl.style.display = 'block';
-  } catch(e) {
-    loadEl.style.display = 'none';
-    resEl.textContent = 'AI bağlantı hatası. Lütfen tekrar deneyin.';
-    resEl.style.display = 'block';
-  }
-}
-    const data = await res.json();
-
-    const text = data.choices?.[0]?.message?.content || 'Sonuç alınamadı.';
-
-    loadEl.style.display = 'none';
-    resEl.innerHTML = text.replace(/\n/g,'<br>');
     resEl.style.display = 'block';
 
   } catch(e) {
