@@ -27,7 +27,8 @@
   .filters { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
   .filter-btn { padding: 5px 14px; border-radius: 20px; border: 1px solid #ddd; background: #fff; font-size: 12px; cursor: pointer; color: #666; transition: all 0.15s; }
   .filter-btn.active { background: #1a1a1a; color: #fff; border-color: transparent; }
-  .task-card { background: #fff; border: 1px solid #e8e8e4; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; transition: border-color 0.15s, background 0.15s; }
+  .task-card { background: #fff; border: 1px solid #e8e8e4; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; transition: border-color 0.15s; }
+  .task-card:hover { border-color: #ccc; }
   .task-card.expanded { border-color: #999; }
   .task-top { display: flex; align-items: flex-start; gap: 10px; }
   .task-check { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #ddd; flex-shrink: 0; margin-top: 2px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px; transition: all 0.15s; }
@@ -51,14 +52,10 @@
   .task-detail.show { display: block; }
   .detail-label { font-size: 11px; color: #aaa; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
   .detail-note { font-size: 13px; color: #666; background: #f8f8f4; padding: 10px 12px; border-radius: 8px; margin-bottom: 12px; line-height: 1.6; }
-  .status-select { font-size:12px; padding:3px 8px; border-radius:6px; border:1px solid #ddd; cursor:pointer; }
-  .status-beklemede { background:#FAEEDA; color:#854F0B; }
-  .status-tamamlandi { background:#EAF3DE; color:#3B6D11; }
-  .status-iptal { background:#FCEBEB; color:#A32D2D; }
-  .comment-input { width:100%; padding:6px 10px; border-radius:6px; border:1px solid #ddd; margin-bottom:6px; font-size:13px; }
-  .comment-btn { padding:5px 12px; font-size:12px; border-radius:6px; border:none; background:#1a1a1a; color:white; cursor:pointer; }
-  .comment-btn:hover { background:#333; }
-  .comment-item { font-size:12px; color:#555; background:#f5f5f0; padding:6px 10px; border-radius:6px; margin-bottom:4px; line-height:1.4; }
+  .status-select { font-size: 12px; padding:2px 6px; border-radius:6px; border:1px solid #ddd; cursor:pointer; }
+  .comment-input { width:100%; font-size:12px; padding:6px; margin-top:4px; border-radius:6px; border:1px solid #ddd; }
+  .ai-loading { font-size: 12px; color: #3C3489; margin-bottom: 8px; display: none; }
+  .ai-result { font-size: 13px; color: #1a1a1a; background: #EEEDFE; border: 1px solid #AFA9EC; padding: 10px 12px; border-radius: 8px; margin-bottom: 12px; line-height: 1.6; display: none; }
   .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.45); z-index: 100; align-items: center; justify-content: center; }
   .modal-overlay.show { display: flex; }
   .modal { background: #fff; border-radius: 14px; padding: 26px; width: 440px; max-width: 92vw; }
@@ -69,16 +66,12 @@
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
   .btn-cancel { padding: 9px 18px; border: 1px solid #ddd; border-radius: 8px; background: none; font-size: 13px; cursor: pointer; color: #888; }
+  .tg-info { background: #E6F1FB; border: 1px solid #85B7EB; border-radius: 8px; padding: 12px 14px; font-size: 12px; color: #185FA5; margin-bottom: 16px; line-height: 1.7; }
+  .tg-info code { background: #fff; padding: 2px 6px; border-radius: 4px; font-size: 11px; word-break: break-all; display: block; margin-top: 4px; }
+  .msg-preview { font-size: 12px; color: #666; background: #f8f8f4; padding: 10px 12px; border-radius: 8px; margin-bottom: 14px; line-height: 1.6; white-space: pre-wrap; display: none; }
   .toast { position: fixed; bottom: 24px; right: 24px; background: #1a1a1a; color: #fff; padding: 11px 18px; border-radius: 9px; font-size: 13px; z-index: 200; opacity: 0; transition: opacity 0.25s; pointer-events: none; }
   .toast.show { opacity: 1; }
   .empty { text-align: center; padding: 50px; color: #aaa; font-size: 13px; }
-  @media (max-width: 700px) {
-    .sidebar { width: 100%; position: relative; height: auto; border-right: none; border-bottom: 1px solid #e8e8e4; }
-    .main { margin-left: 0; padding: 16px; }
-    .app { flex-direction: column; }
-    .stat-row { grid-template-columns: repeat(2, 1fr); }
-    .task-actions { flex-wrap: wrap; }
-  }
 </style>
 </head>
 <body>
@@ -91,7 +84,6 @@
     <div style="font-size:11px;color:#aaa;text-transform:uppercase;letter-spacing:0.5px;padding:0 10px;margin-bottom:6px;">Bağlantı</div>
     <div id="conn-status" style="font-size:12px;color:#aaa;padding:0 10px;">Bağlanıyor...</div>
   </div>
-
   <div class="main">
     <div id="view-tasks">
       <div class="header">
@@ -114,7 +106,6 @@
       </div>
       <div id="task-list"><div class="empty">Yükleniyor...</div></div>
     </div>
-
     <div id="view-meetings" style="display:none;">
       <div class="header">
         <h1>Toplantı Notları</h1>
@@ -149,12 +140,27 @@
   </div>
 </div>
 
+<!-- Meeting Modal -->
+<div class="modal-overlay" id="meetingModal">
+  <div class="modal">
+    <h2>Toplantı Notu</h2>
+    <div class="form-group"><label class="form-label">Başlık</label><input class="form-input" id="m-title" placeholder="Toplantı adı..." /></div>
+    <div class="form-group"><label class="form-label">Tarih</label><input class="form-input" type="date" id="m-date" /></div>
+    <div class="form-group"><label class="form-label">Katılımcılar</label><input class="form-input" id="m-people" placeholder="Ahmet, Betül..." /></div>
+    <div class="form-group"><label class="form-label">Notlar</label><textarea class="form-input" id="m-note" rows="3" placeholder="Toplantıda konuşulanlar..."></textarea></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('meetingModal')">İptal</button>
+      <button class="btn-primary" onclick="addMeeting()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
 const SUPABASE_URL = 'https://cvgxwpxvtxedajzrnand.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_cJp6p5cSfJwOynI5kCK_2Q_EPP4bijp';
-let sb, tasks = [], currentFilter = 'all', expandedId = null;
+let sb, tasks = [], meetings = [], currentFilter = 'all', expandedId = null;
 
 async function init() {
   try {
@@ -162,20 +168,6 @@ async function init() {
     const { error } = await sb.from('tasks').select('id').limit(1);
     if (error) throw error;
     document.getElementById('conn-status').innerHTML = '<span style="color:#3B6D11;">● Bağlandı</span>';
-    await loadTasks();
+    await loadTasks(); await loadMeetings();
   } catch(e) {
-    document.getElementById('conn-status').innerHTML = '<span style="color:#A32D2D;">● Bağlantı hatası</span>';
-    document.getElementById('task-list').innerHTML = '<div class="empty">Veritabanına bağlanılamadı.</div>';
-  }
-}
-
-async function loadTasks() {
-  const { data } = await sb.from('tasks').select('*').order('created_at', { ascending: false });
-  tasks = data || [];
-  renderTasks();
-}
-
-function dayDiff(ds) { if (!ds) return 999; const d=new Date(ds), n=new Date(); n.setHours(0,0,0,0); return Math.ceil((d-n)/86400000); }
-function fmtDate(ds) { if(!ds) return ''; return new Date(ds).toLocaleDateString('tr-TR',{day:'numeric',month:'short'});}
-function priorityBadge(p) { if(p==='acil') return '<span class="badge badge-red">Acil</span>'; if(p==='orta') return '<span class="badge badge-amber">Orta</span>'; return '<span class="badge badge-green">Düşük</span>'; }
-function statusClass(s) { if(s==='Beklemede') return 'status
+    document.getElementById('conn-status').innerHTML = '<span style="color:#A32D2D;">● Bağlantı hatası
