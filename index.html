@@ -310,30 +310,27 @@ async function aiResearch(taskId, title) {
   const loadEl = document.getElementById('ai-load-'+taskId);
   const resEl = document.getElementById('ai-res-'+taskId);
   if (!loadEl || !resEl) return;
-
   loadEl.style.display = 'block';
   resEl.style.display = 'none';
   resEl.innerHTML = '';
 
   try {
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    const res = await fetch('/api/ai', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer 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'
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "user",
-            content: `Bu iş görevi hakkında Türkçe kısa bir özet yaz ve ne yapılması gerektiğine dair 3-4 madde halinde pratik öneriler sun. Görev: "${title}". Yanıtın toplam 150 kelimeyi geçmesin.`
-          }
-        ],
-        max_tokens: 300
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: `Bu görev için Türkçe kısa özet ve 3-4 maddelik yapılacaklar: "${title}"` })
     });
 
+    const data = await res.json();
+    loadEl.style.display = 'none';
+    resEl.innerHTML = data.text.replace(/\n/g,'<br>');
+    resEl.style.display = 'block';
+  } catch(e) {
+    loadEl.style.display = 'none';
+    resEl.textContent = 'AI bağlantı hatası. Lütfen tekrar deneyin.';
+    resEl.style.display = 'block';
+  }
+}
     const data = await res.json();
 
     const text = data.choices?.[0]?.message?.content || 'Sonuç alınamadı.';
