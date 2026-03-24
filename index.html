@@ -27,8 +27,7 @@
   .filters { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
   .filter-btn { padding: 5px 14px; border-radius: 20px; border: 1px solid #ddd; background: #fff; font-size: 12px; cursor: pointer; color: #666; transition: all 0.15s; }
   .filter-btn.active { background: #1a1a1a; color: #fff; border-color: transparent; }
-  .task-card { background: #fff; border: 1px solid #e8e8e4; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; transition: border-color 0.15s; }
-  .task-card:hover { border-color: #ccc; }
+  .task-card { background: #fff; border: 1px solid #e8e8e4; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; transition: border-color 0.15s, background 0.15s; }
   .task-card.expanded { border-color: #999; }
   .task-top { display: flex; align-items: flex-start; gap: 10px; }
   .task-check { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #ddd; flex-shrink: 0; margin-top: 2px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px; transition: all 0.15s; }
@@ -43,17 +42,43 @@
   .badge-green { background: #EAF3DE; color: #3B6D11; }
   .deadline { font-size: 12px; color: #888; }
   .deadline.urgent { color: #A32D2D; font-weight: 600; }
-  .task-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; flex-wrap: wrap; }
+  .task-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
   .icon-btn { background: none; border: 1px solid #e0e0e0; border-radius: 7px; padding: 5px 10px; font-size: 12px; cursor: pointer; color: #555; transition: background 0.12s; }
   .icon-btn:hover { background: #f5f5f0; }
+  .ai-btn { background: #EEEDFE; border-color: #AFA9EC; color: #3C3489; font-weight: 500; }
+  .tg-btn { background: #E6F1FB; border-color: #85B7EB; color: #185FA5; font-weight: 500; }
   .task-detail { margin-top: 14px; padding-top: 14px; border-top: 1px solid #f0f0ea; display: none; }
   .task-detail.show { display: block; }
-  .comment-section { margin-top:10px; }
-  .comment-section textarea { width: 100%; padding:8px; border-radius:6px; border:1px solid #ddd; resize:none; margin-bottom:6px; }
-  .comment-section button { font-size:13px; padding:6px 12px; }
+  .detail-label { font-size: 11px; color: #aaa; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .detail-note { font-size: 13px; color: #666; background: #f8f8f4; padding: 10px 12px; border-radius: 8px; margin-bottom: 12px; line-height: 1.6; }
+  .status-select { font-size:12px; padding:3px 8px; border-radius:6px; border:1px solid #ddd; cursor:pointer; }
+  .status-beklemede { background:#FAEEDA; color:#854F0B; }
+  .status-tamamlandi { background:#EAF3DE; color:#3B6D11; }
+  .status-iptal { background:#FCEBEB; color:#A32D2D; }
+  .comment-input { width:100%; padding:6px 10px; border-radius:6px; border:1px solid #ddd; margin-bottom:6px; font-size:13px; }
+  .comment-btn { padding:5px 12px; font-size:12px; border-radius:6px; border:none; background:#1a1a1a; color:white; cursor:pointer; }
+  .comment-btn:hover { background:#333; }
+  .comment-item { font-size:12px; color:#555; background:#f5f5f0; padding:6px 10px; border-radius:6px; margin-bottom:4px; line-height:1.4; }
+  .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.45); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.show { display: flex; }
+  .modal { background: #fff; border-radius: 14px; padding: 26px; width: 440px; max-width: 92vw; }
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 12px; color: #888; margin-bottom: 5px; display: block; }
+  .form-input { width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; color: #1a1a1a; background: #fff; outline: none; font-family: inherit; }
+  .form-input:focus { border-color: #999; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+  .btn-cancel { padding: 9px 18px; border: 1px solid #ddd; border-radius: 8px; background: none; font-size: 13px; cursor: pointer; color: #888; }
   .toast { position: fixed; bottom: 24px; right: 24px; background: #1a1a1a; color: #fff; padding: 11px 18px; border-radius: 9px; font-size: 13px; z-index: 200; opacity: 0; transition: opacity 0.25s; pointer-events: none; }
   .toast.show { opacity: 1; }
   .empty { text-align: center; padding: 50px; color: #aaa; font-size: 13px; }
+  @media (max-width: 700px) {
+    .sidebar { width: 100%; position: relative; height: auto; border-right: none; border-bottom: 1px solid #e8e8e4; }
+    .main { margin-left: 0; padding: 16px; }
+    .app { flex-direction: column; }
+    .stat-row { grid-template-columns: repeat(2, 1fr); }
+    .task-actions { flex-wrap: wrap; }
+  }
 </style>
 </head>
 <body>
@@ -61,6 +86,7 @@
   <div class="sidebar">
     <div class="sidebar-logo">İş Takip</div>
     <div class="nav-item active" id="nav-tasks" onclick="showView('tasks')">📋 Görevler</div>
+    <div class="nav-item" id="nav-meetings" onclick="showView('meetings')">📝 Toplantılar</div>
     <div class="separator"></div>
     <div style="font-size:11px;color:#aaa;text-transform:uppercase;letter-spacing:0.5px;padding:0 10px;margin-bottom:6px;">Bağlantı</div>
     <div id="conn-status" style="font-size:12px;color:#aaa;padding:0 10px;">Bağlanıyor...</div>
@@ -75,9 +101,26 @@
       <div class="stat-row">
         <div class="stat-card"><div class="stat-label">Toplam</div><div class="stat-val" id="s-total">—</div></div>
         <div class="stat-card"><div class="stat-label">Devam ediyor</div><div class="stat-val" id="s-active">—</div></div>
+        <div class="stat-card"><div class="stat-label">Yaklaşan deadline</div><div class="stat-val" id="s-urgent" style="color:#A32D2D;">—</div></div>
         <div class="stat-card"><div class="stat-label">Tamamlanan</div><div class="stat-val" id="s-done">—</div></div>
       </div>
+      <div class="filters">
+        <button class="filter-btn active" onclick="setFilter('all',this)">Tümü</button>
+        <button class="filter-btn" onclick="setFilter('acil',this)">🔴 Acil</button>
+        <button class="filter-btn" onclick="setFilter('orta',this)">🟡 Orta</button>
+        <button class="filter-btn" onclick="setFilter('dusuk',this)">🟢 Düşük</button>
+        <button class="filter-btn" onclick="setFilter('active',this)">Devam edenler</button>
+        <button class="filter-btn" onclick="setFilter('done',this)">Tamamlananlar</button>
+      </div>
       <div id="task-list"><div class="empty">Yükleniyor...</div></div>
+    </div>
+
+    <div id="view-meetings" style="display:none;">
+      <div class="header">
+        <h1>Toplantı Notları</h1>
+        <button class="btn-primary" onclick="openModal('meetingModal')">+ Yeni Toplantı</button>
+      </div>
+      <div id="meeting-list"><div class="empty">Yükleniyor...</div></div>
     </div>
   </div>
 </div>
@@ -87,6 +130,17 @@
   <div class="modal">
     <h2>Yeni Görev</h2>
     <div class="form-group"><label class="form-label">Başlık</label><input class="form-input" id="f-title" placeholder="Görev adı..." /></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Başlangıç</label><input class="form-input" type="date" id="f-start" /></div>
+      <div class="form-group"><label class="form-label">Deadline</label><input class="form-input" type="date" id="f-deadline" /></div>
+    </div>
+    <div class="form-group"><label class="form-label">Öncelik</label>
+      <select class="form-input" id="f-priority">
+        <option value="acil">🔴 Acil</option>
+        <option value="orta" selected>🟡 Orta</option>
+        <option value="dusuk">🟢 Düşük</option>
+      </select>
+    </div>
     <div class="form-group"><label class="form-label">Not</label><textarea class="form-input" id="f-note" rows="2" placeholder="Açıklama..."></textarea></div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal('taskModal')">İptal</button>
@@ -100,9 +154,7 @@
 <script>
 const SUPABASE_URL = 'https://cvgxwpxvtxedajzrnand.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_cJp6p5cSfJwOynI5kCK_2Q_EPP4bijp';
-const TG_TOKEN = '8632000680:AAGZ_vVX8KJCsU7obXp63zgcNYmk4_5JNTs';
-
-let sb, tasks = [], expandedId = null;
+let sb, tasks = [], currentFilter = 'all', expandedId = null;
 
 async function init() {
   try {
@@ -119,99 +171,11 @@ async function init() {
 
 async function loadTasks() {
   const { data } = await sb.from('tasks').select('*').order('created_at', { ascending: false });
-  tasks = data || []; renderTasks();
+  tasks = data || [];
+  renderTasks();
 }
 
-function renderTasks() {
-  if (!tasks.length) { document.getElementById('task-list').innerHTML='<div class="empty">Görev bulunamadı</div>'; return; }
-  document.getElementById('s-total').textContent = tasks.length;
-  document.getElementById('s-active').textContent = tasks.filter(t=>t.status!=='Tamamlandı').length;
-  document.getElementById('s-done').textContent = tasks.filter(t=>t.status==='Tamamlandı').length;
-
-  document.getElementById('task-list').innerHTML = tasks.map(t=>`
-    <div class="task-card ${expandedId===t.id?'expanded':''}">
-      <div class="task-top">
-        <div class="task-check ${t.status==='Tamamlandı'?'done':''}" onclick="toggleDoneStatus('${t.id}')">
-          ${t.status==='Tamamlandı'?'✓':''}
-        </div>
-        <div class="task-info" onclick="toggleExpand('${t.id}')">
-          <div class="task-title ${t.status==='Tamamlandı'?'done':''}">${t.title}</div>
-          <div class="task-meta">
-            <span class="badge">${t.status}</span>
-          </div>
-        </div>
-        <div class="task-actions">
-          <button class="icon-btn" onclick="editStatus('${t.id}','Beklemede')">Beklemede</button>
-          <button class="icon-btn" onclick="editStatus('${t.id}','Tamamlandı')">Tamamlandı</button>
-          <button class="icon-btn" style="color:#A32D2D;" onclick="editStatus('${t.id}','İptal')">İptal</button>
-          <button class="icon-btn" onclick="toggleComment('${t.id}')">💬 Yorum</button>
-        </div>
-      </div>
-      <div class="task-detail ${expandedId===t.id?'show':''}">
-        <div class="detail-note">${t.note||'Henüz not eklenmedi.'}</div>
-        <div class="comment-section" id="comment-${t.id}" style="display:none;">
-          <textarea id="c-text-${t.id}" rows="2" placeholder="Yorum yaz...">${t.comment||''}</textarea>
-          <button class="btn-primary" onclick="saveComment('${t.id}')">Kaydet</button>
-        </div>
-      </div>
-    </div>
-  `).join('');
-}
-
-// Görev detayını aç/kapa
-function toggleExpand(id) { expandedId = expandedId===id?null:id; renderTasks(); }
-
-// Görev statüsünü güncelle
-async function editStatus(id, status) {
-  await sb.from('tasks').update({ status }).eq('id', id);
-  showToast(`Görev durumu "${status}" olarak güncellendi ✓`);
-  await loadTasks();
-}
-
-// Yorum alanını göster/gizle
-function toggleComment(id) {
-  const el = document.getElementById('comment-' + id);
-  if(el) el.style.display = el.style.display==='none'?'block':'none';
-}
-
-// Yorum kaydet
-async function saveComment(id) {
-  const text = document.getElementById('c-text-' + id).value;
-  await sb.from('tasks').update({ comment: text }).eq('id', id);
-  showToast('Yorum kaydedildi ✓');
-  await loadTasks();
-}
-
-// Toggle "Tamamlandı" simgesi (check)
-async function toggleDoneStatus(id) {
-  const t = tasks.find(x => x.id===id);
-  const newStatus = t.status==='Tamamlandı'?'Beklemede':'Tamamlandı';
-  await editStatus(id, newStatus);
-}
-
-// Yeni görev ekleme
-async function addTask() {
-  const title = document.getElementById('f-title').value.trim();
-  if(!title) { alert('Görev başlığı gerekli!'); return; }
-  await sb.from('tasks').insert({ title, note: document.getElementById('f-note').value, status:'Beklemede' });
-  closeModal('taskModal');
-  document.getElementById('f-title').value=''; document.getElementById('f-note').value='';
-  showToast('Görev eklendi ✓'); await loadTasks();
-}
-
-function openModal(id) { document.getElementById(id).classList.add('show'); }
-function closeModal(id) { document.getElementById(id).classList.remove('show'); }
-
-function showView(v) {
-  document.getElementById('view-tasks').style.display=v==='tasks'?'block':'none';
-}
-
-function showToast(msg) {
-  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2500);
-}
-
-init();
-</script>
-</body>
-</html>
+function dayDiff(ds) { if (!ds) return 999; const d=new Date(ds), n=new Date(); n.setHours(0,0,0,0); return Math.ceil((d-n)/86400000); }
+function fmtDate(ds) { if(!ds) return ''; return new Date(ds).toLocaleDateString('tr-TR',{day:'numeric',month:'short'});}
+function priorityBadge(p) { if(p==='acil') return '<span class="badge badge-red">Acil</span>'; if(p==='orta') return '<span class="badge badge-amber">Orta</span>'; return '<span class="badge badge-green">Düşük</span>'; }
+function statusClass(s) { if(s==='Beklemede') return 'status
