@@ -1,141 +1,200 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>İş Takip</title>
-
-<!-- SUPABASE (ÖNCE YÜKLENİR) -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<style>
-body{font-family:sans-serif;background:#f5f5f5;margin:0}
-.box{max-width:400px;margin:80px auto;background:#fff;padding:20px;border-radius:10px}
-input,button{width:100%;padding:10px;margin-top:10px}
-button{background:#111;color:#fff;border:none;cursor:pointer}
-</style>
-</head>
-<body>
-
-<div id="auth" class="box">
-  <h3>Giriş</h3>
-  <input id="email" placeholder="email">
-  <input id="pass" type="password" placeholder="şifre">
-  
-  <label>
-    <input type="checkbox" id="remember"> Beni hatırla
-  </label>
-
-  <button onclick="login()">Giriş Yap</button>
-</div>
-
-<div id="app" class="box" style="display:none;">
-  <h3>Görevler</h3>
-
-  <input id="taskInput" placeholder="Görev yaz">
-  <button onclick="addTask()">Ekle</button>
-
-  <div id="list"></div>
-
-  <button onclick="logout()">Çıkış Yap</button>
-</div>
-
 <script>
 const SB_URL='https://cvgxwpxvtxedajzrnand.supabase.co';
 const SB_KEY='sb_publishable_cJp6p5cSfJwOynI5kCK_2Q_EPP4bijp';
+const TG_TOKEN='8632000680:AAGZ_vVX8KJCsU7obXp63zgcNYmk4_5JNTs';
 
-let sb;
-let user=null;
+let sb,me=null,myProfile=null;
+let tasks=[],profiles=[],teams=[];
+let onlineUsers=new Map();
 
 // INIT
 async function init(){
   if(!window.supabase){
-    alert("Supabase yüklenmedi!");
+    alert("Supabase yüklenmedi");
     return;
   }
 
-  sb = window.supabase.createClient(SB_URL, SB_KEY);
+  sb=window.supabase.createClient(SB_URL,SB_KEY);
 
-  const remember = localStorage.getItem("remember");
+  const remember = localStorage.getItem("remember_me");
 
-  if(remember){
-    const {data:{session}} = await sb.auth.getSession();
+  if(remember==='1'){
+    const {data:{session}}=await sb.auth.getSession();
     if(session){
-      user = session.user;
-      showApp();
-      loadTasks();
-      return;
-    }
-  }
+      me=session.user;
+      await showApp();
+    } else showAuth();
+  } else showAuth();
 
-  showAuth();
+  sb.auth.onAuthStateChange(async(_,s)=>{
+    if(s){
+      me=s.user;
+      await showApp();
+    }else{
+      me=null;
+      showAuth();
+    }
+  });
 }
 
 // LOGIN
-async function login(){
-  const email=document.getElementById('email').value;
-  const pass=document.getElementById('pass').value;
-  const remember=document.getElementById('remember').checked;
+async function doLogin(){
+  const email=document.getElementById('l-email').value.trim();
+  const pass=document.getElementById('l-pass').value;
 
-  if(remember) localStorage.setItem("remember","1");
+  const rememberEl=document.getElementById('remember-me');
+  const remember=rememberEl ? rememberEl.checked : false;
 
-  const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
+  if(remember) localStorage.setItem('remember_me','1');
+  else localStorage.removeItem('remember_me');
 
-  if(error){
-    alert("Hatalı giriş");
-    return;
-  }
-
-  user=data.user;
-  showApp();
-  loadTasks();
+  const {error}=await sb.auth.signInWithPassword({email,password:pass});
+  if(error) alert("Hatalı giriş");
 }
 
 // LOGOUT
-async function logout(){
+async function doLogout(){
+  await sb.from('profiles').update({status:'offline'}).eq('id',me.id);
   await sb.auth.signOut();
-  localStorage.removeItem("remember");
+  localStorage.removeItem('remember_me');
   location.reload();
 }
 
-// UI
-function showApp(){
-  document.getElementById('auth').style.display='none';
-  document.getElementById('app').style.display='block';
+// APP LOAD
+async function showApp(){
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('app-screen').style.display='flex';
+
+  const {data}=await sb.from('profiles').select('*').eq('id',me.id).single();
+  myProfile=data;
+
+  // ONLINE YAP
+  await sb.from('profiles').update({status:'online'}).eq('id',me.id);
+
+  // ROLE CONTROL
+  if(myProfile.role!=='admin'){
+    document.getElementById('nav-users').style.display='none';
+  }
+
+  await Promise.all([
+    loadTasks(),
+    loadProfiles(),
+    loadTeams()
+  ]);
+
+  startRealtime();
 }
 
-function showAuth(){
-  document.getElementById('auth').style.display='block';
-  document.getElementById('app').style.display='none';
+// REALTIME
+function startRealtime(){
+  sb.channel('tasks')
+    .on('postgres_changes',{event:'*',schema:'public',table:'tasks'},()=>loadTasks())
+    .subscribe();
+
+  sb.channel('comments')
+    .on('postgres_changes',{event:'*',schema:'public',table:'comments'},()=>loadTasks())
+    .subscribe();
+
+  sb.channel('profiles')
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'profiles'},()=>loadProfiles())
+    .subscribe();
 }
 
 // TASK
 async function loadTasks(){
   const {data}=await sb.from('tasks').select('*').order('created_at',{ascending:false});
-  const list=document.getElementById('list');
+  tasks=data||[];
+  renderTasks();
+}
 
-  list.innerHTML=(data||[]).map(t=>`
-    <div style="background:#eee;margin-top:5px;padding:8px;border-radius:5px">
-      ${t.title}
+async function addTask(){
+  const title=document.getElementById('f-title').value.trim();
+  if(!title) return alert("Başlık gerekli");
+
+  await sb.from('tasks').insert({
+    title,
+    user_id:me.id
+  });
+
+  await loadTasks();
+}
+
+// COMMENT
+async function addComment(taskId){
+  const inp=document.getElementById('ci-'+taskId);
+  const val=inp.value.trim();
+  if(!val) return;
+
+  await sb.from('comments').insert({
+    task_id:taskId,
+    content:val,
+    user_id:me.id,
+    user_email:me.email
+  });
+
+  inp.value='';
+  await loadTasks();
+}
+
+// USERS
+async function loadProfiles(){
+  const {data}=await sb.from('profiles').select('*');
+  profiles=data||[];
+  renderUsers();
+}
+
+function renderUsers(){
+  const wrap=document.getElementById('user-list');
+  if(!wrap) return;
+
+  wrap.innerHTML=`
+  <table class="user-table">
+    <thead>
+      <tr><th>Ad</th><th>Email</th><th>Rol</th><th>Durum</th></tr>
+    </thead>
+    <tbody>
+      ${profiles.map(p=>`
+        <tr>
+          <td>${p.full_name||''}</td>
+          <td>${p.email||p.id}</td>
+          <td>${p.role||'agent'}</td>
+          <td>
+            <select onchange="setStatus('${p.id}',this.value)">
+              <option value="online" ${p.status==='online'?'selected':''}>online</option>
+              <option value="offline" ${p.status==='offline'?'selected':''}>offline</option>
+              <option value="break" ${p.status==='break'?'selected':''}>mola</option>
+              <option value="meeting" ${p.status==='meeting'?'selected':''}>toplantı</option>
+            </select>
+          </td>
+        </tr>
+      `).join('')}
+    </tbody>
+  </table>`;
+}
+
+// STATUS
+async function setStatus(id,val){
+  await sb.from('profiles').update({status:val}).eq('id',id);
+}
+
+// TEAM
+async function loadTeams(){
+  const {data}=await sb.from('teams').select('*');
+  teams=data||[];
+  renderTeams();
+}
+
+function renderTeams(){
+  const wrap=document.getElementById('team-list');
+  if(!wrap) return;
+
+  wrap.innerHTML=teams.map(t=>`
+    <div class="team-card">
+      <b>${t.name}</b><br>
+      ${profiles.map(p=>`<div>${p.full_name}</div>`).join('')}
     </div>
   `).join('');
 }
 
-async function addTask(){
-  const val=document.getElementById('taskInput').value;
-  if(!val) return;
-
-  await sb.from('tasks').insert({
-    title:val,
-    user_id:user.id
-  });
-
-  document.getElementById('taskInput').value='';
-  loadTasks();
-}
-
 init();
 </script>
-
-</body>
-</html>
