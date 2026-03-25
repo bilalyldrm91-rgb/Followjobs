@@ -1,81 +1,178 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>İş Takip</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f0; color: #1a1a1a; min-height: 100vh; }
-  .app { display: flex; min-height: 100vh; }
-  .sidebar { width: 220px; background: #fff; border-right: 1px solid #e8e8e4; padding: 20px 14px; flex-shrink: 0; position: fixed; top: 0; left: 0; bottom: 0; overflow-y: auto; }
-  .main { margin-left: 220px; padding: 24px; flex: 1; }
-  .sidebar-logo { font-size: 16px; font-weight: 600; color: #1a1a1a; margin-bottom: 24px; padding: 4px 10px; }
-  .nav-item { display: flex; align-items: center; gap: 8px; padding: 9px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; color: #666; margin-bottom: 4px; transition: background 0.15s; }
-  .nav-item.active { background: #f0f0ea; color: #1a1a1a; font-weight: 500; }
-  .nav-item:hover { background: #f0f0ea; }
-  .separator { height: 1px; background: #e8e8e4; margin: 10px 0; }
-  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
-  .header h1 { font-size: 20px; font-weight: 600; }
-  .btn-primary { background: #1a1a1a; color: #fff; border: none; padding: 9px 18px; border-radius: 8px; font-size: 13px; cursor: pointer; font-weight: 500; }
-  .btn-primary:hover { background: #333; }
-  .stat-row { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; margin-bottom: 24px; }
-  .stat-card { background: #fff; border: 1px solid #e8e8e4; border-radius: 10px; padding: 14px; }
-  .stat-label { font-size: 11px; color: #999; margin-bottom: 6px; }
-  .stat-val { font-size: 24px; font-weight: 600; color: #1a1a1a; }
-  .filters { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
-  .filter-btn { padding: 5px 14px; border-radius: 20px; border: 1px solid #ddd; background: #fff; font-size: 12px; cursor: pointer; color: #666; transition: all 0.15s; }
-  .filter-btn.active { background: #1a1a1a; color: #fff; border-color: transparent; }
-  .task-card { background: #fff; border: 1px solid #e8e8e4; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; transition: border-color 0.15s; }
-  .task-card:hover { border-color: #ccc; }
-  .task-card.expanded { border-color: #999; }
-  .task-top { display: flex; align-items: flex-start; gap: 10px; }
-  .task-check { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #ddd; flex-shrink: 0; margin-top: 2px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px; transition: all 0.15s; }
-  .task-check.done { background: #639922; border-color: #639922; color: white; }
-  .task-info { flex: 1; cursor: pointer; }
-  .task-title { font-size: 14px; font-weight: 500; color: #1a1a1a; margin-bottom: 5px; }
-  .task-title.done { text-decoration: line-through; color: #aaa; }
-  .task-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .badge { padding: 2px 9px; border-radius: 10px; font-size: 11px; font-weight: 500; }
-  .badge-red { background: #FCEBEB; color: #A32D2D; }
-  .badge-amber { background: #FAEEDA; color: #854F0B; }
-  .badge-green { background: #EAF3DE; color: #3B6D11; }
-  .deadline { font-size: 12px; color: #888; }
-  .deadline.urgent { color: #A32D2D; font-weight: 600; }
-  .task-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
-  .icon-btn { background: none; border: 1px solid #e0e0e0; border-radius: 7px; padding: 5px 10px; font-size: 12px; cursor: pointer; color: #555; transition: background 0.12s; }
-  .icon-btn:hover { background: #f5f5f0; }
-  .ai-btn { background: #EEEDFE; border-color: #AFA9EC; color: #3C3489; font-weight: 500; }
-  .tg-btn { background: #E6F1FB; border-color: #85B7EB; color: #185FA5; font-weight: 500; }
-  .task-detail { margin-top: 14px; padding-top: 14px; border-top: 1px solid #f0f0ea; display: none; }
-  .task-detail.show { display: block; }
-  .detail-label { font-size: 11px; color: #aaa; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
-  .detail-note { font-size: 13px; color: #666; background: #f8f8f4; padding: 10px 12px; border-radius: 8px; margin-bottom: 12px; line-height: 1.6; }
-  .status-select { font-size: 12px; padding:2px 6px; border-radius:6px; border:1px solid #ddd; cursor:pointer; }
-  .comment-input { width:100%; font-size:12px; padding:6px; margin-top:4px; border-radius:6px; border:1px solid #ddd; }
-  .ai-loading { font-size: 12px; color: #3C3489; margin-bottom: 8px; display: none; }
-  .ai-result { font-size: 13px; color: #1a1a1a; background: #EEEDFE; border: 1px solid #AFA9EC; padding: 10px 12px; border-radius: 8px; margin-bottom: 12px; line-height: 1.6; display: none; }
-  .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.45); z-index: 100; align-items: center; justify-content: center; }
-  .modal-overlay.show { display: flex; }
-  .modal { background: #fff; border-radius: 14px; padding: 26px; width: 440px; max-width: 92vw; }
-  .form-group { margin-bottom: 14px; }
-  .form-label { font-size: 12px; color: #888; margin-bottom: 5px; display: block; }
-  .form-input { width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; color: #1a1a1a; background: #fff; outline: none; font-family: inherit; }
-  .form-input:focus { border-color: #999; }
-  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
-  .btn-cancel { padding: 9px 18px; border: 1px solid #ddd; border-radius: 8px; background: none; font-size: 13px; cursor: pointer; color: #888; }
-  .tg-info { background: #E6F1FB; border: 1px solid #85B7EB; border-radius: 8px; padding: 12px 14px; font-size: 12px; color: #185FA5; margin-bottom: 16px; line-height: 1.7; }
-  .tg-info code { background: #fff; padding: 2px 6px; border-radius: 4px; font-size: 11px; word-break: break-all; display: block; margin-top: 4px; }
-  .msg-preview { font-size: 12px; color: #666; background: #f8f8f4; padding: 10px 12px; border-radius: 8px; margin-bottom: 14px; line-height: 1.6; white-space: pre-wrap; display: none; }
-  .toast { position: fixed; bottom: 24px; right: 24px; background: #1a1a1a; color: #fff; padding: 11px 18px; border-radius: 9px; font-size: 13px; z-index: 200; opacity: 0; transition: opacity 0.25s; pointer-events: none; }
-  .toast.show { opacity: 1; }
-  .empty { text-align: center; padding: 50px; color: #aaa; font-size: 13px; }
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f0;color:#1a1a1a;min-height:100vh;}
+
+/* AUTH */
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;}
+.auth-box{background:#fff;border-radius:16px;padding:36px;width:380px;max-width:92vw;border:1px solid #e8e8e4;}
+.auth-logo{font-size:20px;font-weight:700;margin-bottom:8px;}
+.auth-sub{font-size:13px;color:#888;margin-bottom:28px;}
+.auth-tabs{display:flex;gap:4px;margin-bottom:24px;background:#f5f5f0;border-radius:8px;padding:4px;}
+.auth-tab{flex:1;padding:8px;text-align:center;font-size:13px;cursor:pointer;border-radius:6px;color:#888;}
+.auth-tab.active{background:#fff;color:#1a1a1a;font-weight:500;}
+.form-group{margin-bottom:14px;}
+.form-label{font-size:12px;color:#888;margin-bottom:5px;display:block;}
+.form-input{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;color:#1a1a1a;background:#fff;outline:none;font-family:inherit;}
+.form-input:focus{border-color:#999;}
+.btn-full{width:100%;padding:11px;background:#1a1a1a;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;margin-top:4px;}
+.btn-full:hover{background:#333;}
+.auth-msg{font-size:12px;text-align:center;margin-top:12px;min-height:18px;}
+.auth-msg.err{color:#A32D2D;}
+.auth-msg.ok{color:#3B6D11;}
+
+/* APP */
+.app{display:flex;min-height:100vh;}
+.sidebar{width:220px;background:#fff;border-right:1px solid #e8e8e4;padding:20px 14px;flex-shrink:0;position:fixed;top:0;left:0;bottom:0;overflow-y:auto;display:flex;flex-direction:column;}
+.main{margin-left:220px;padding:24px;flex:1;}
+.sidebar-logo{font-size:15px;font-weight:700;color:#1a1a1a;margin-bottom:24px;padding:4px 10px;}
+.nav-item{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:8px;cursor:pointer;font-size:13px;color:#666;margin-bottom:4px;}
+.nav-item.active{background:#f0f0ea;color:#1a1a1a;font-weight:500;}
+.nav-item:hover{background:#f0f0ea;}
+.separator{height:1px;background:#e8e8e4;margin:10px 0;}
+.user-info{padding:8px 10px;font-size:12px;color:#888;margin-top:auto;}
+.user-email{font-size:12px;color:#1a1a1a;font-weight:500;word-break:break-all;}
+.btn-logout{margin-top:8px;width:100%;padding:7px;border:1px solid #ddd;border-radius:7px;background:none;font-size:12px;cursor:pointer;color:#888;}
+.btn-logout:hover{background:#f5f5f0;}
+
+/* HEADER */
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;}
+.header h1{font-size:20px;font-weight:600;}
+.btn-primary{background:#1a1a1a;color:#fff;border:none;padding:9px 18px;border-radius:8px;font-size:13px;cursor:pointer;font-weight:500;}
+.btn-primary:hover{background:#333;}
+
+/* STATS */
+.stat-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:24px;}
+.stat-card{background:#fff;border:1px solid #e8e8e4;border-radius:10px;padding:14px;}
+.stat-label{font-size:11px;color:#999;margin-bottom:6px;}
+.stat-val{font-size:24px;font-weight:600;color:#1a1a1a;}
+
+/* FILTERS */
+.filters{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+.filter-btn{padding:5px 14px;border-radius:20px;border:1px solid #ddd;background:#fff;font-size:12px;cursor:pointer;color:#666;}
+.filter-btn.active{background:#1a1a1a;color:#fff;border-color:transparent;}
+
+/* TASK CARD */
+.task-card{background:#fff;border:1px solid #e8e8e4;border-radius:12px;padding:14px 16px;margin-bottom:10px;transition:border-color 0.15s;}
+.task-card:hover{border-color:#ccc;}
+.task-card.expanded{border-color:#999;}
+.task-top{display:flex;align-items:flex-start;gap:10px;}
+.task-info{flex:1;cursor:pointer;}
+.task-title{font-size:14px;font-weight:500;color:#1a1a1a;margin-bottom:5px;}
+.task-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.badge{padding:2px 9px;border-radius:10px;font-size:11px;font-weight:500;}
+.badge-red{background:#FCEBEB;color:#A32D2D;}
+.badge-amber{background:#FAEEDA;color:#854F0B;}
+.badge-green{background:#EAF3DE;color:#3B6D11;}
+.badge-blue{background:#E6F1FB;color:#185FA5;}
+.badge-gray{background:#F1EFE8;color:#5F5E5A;}
+.badge-purple{background:#EEEDFE;color:#3C3489;}
+.deadline{font-size:12px;color:#888;}
+.deadline.urgent{color:#A32D2D;font-weight:600;}
+.task-actions{display:flex;gap:6px;align-items:center;flex-shrink:0;flex-wrap:wrap;}
+.icon-btn{background:none;border:1px solid #e0e0e0;border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer;color:#555;}
+.icon-btn:hover{background:#f5f5f0;}
+.tg-btn{background:#E6F1FB;border-color:#85B7EB;color:#185FA5;font-weight:500;}
+.ai-btn{background:#EEEDFE;border-color:#AFA9EC;color:#3C3489;font-weight:500;}
+
+/* TASK DETAIL */
+.task-detail{margin-top:14px;padding-top:14px;border-top:1px solid #f0f0ea;display:none;}
+.task-detail.show{display:block;}
+.detail-label{font-size:11px;color:#aaa;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px;}
+.detail-note{font-size:13px;color:#666;background:#f8f8f4;padding:10px 12px;border-radius:8px;margin-bottom:12px;line-height:1.6;}
+.detail-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.ai-loading{font-size:12px;color:#3C3489;margin-bottom:8px;display:none;}
+.ai-result{font-size:13px;color:#1a1a1a;background:#EEEDFE;border:1px solid #AFA9EC;padding:10px 12px;border-radius:8px;margin-bottom:12px;line-height:1.6;display:none;}
+
+/* STATUS SELECT */
+.status-select{padding:4px 8px;border-radius:6px;border:1px solid #ddd;font-size:12px;cursor:pointer;background:#fff;color:#1a1a1a;font-family:inherit;}
+
+/* ASSIGNEES */
+.assignees{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.assignee-tag{display:flex;align-items:center;gap:4px;background:#f0f0ea;border-radius:20px;padding:3px 10px;font-size:12px;color:#555;}
+.assignee-tag button{background:none;border:none;cursor:pointer;color:#aaa;font-size:11px;padding:0;line-height:1;}
+.assign-form{display:flex;gap:6px;margin-bottom:14px;}
+.assign-input{flex:1;padding:7px 10px;border:1px solid #ddd;border-radius:7px;font-size:12px;font-family:inherit;color:#1a1a1a;}
+.assign-btn{padding:7px 12px;background:#1a1a1a;color:#fff;border:none;border-radius:7px;font-size:12px;cursor:pointer;}
+
+/* COMMENTS */
+.comments-list{margin-bottom:10px;}
+.comment{padding:8px 10px;border-radius:8px;background:#f8f8f4;margin-bottom:6px;}
+.comment-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+.comment-email{font-size:11px;font-weight:500;color:#555;}
+.comment-time{font-size:11px;color:#aaa;}
+.comment-text{font-size:13px;color:#333;line-height:1.5;}
+.comment-form{display:flex;gap:6px;}
+.comment-input{flex:1;padding:8px 10px;border:1px solid #ddd;border-radius:7px;font-size:13px;font-family:inherit;color:#1a1a1a;resize:none;}
+.comment-btn{padding:8px 12px;background:#1a1a1a;color:#fff;border:none;border-radius:7px;font-size:12px;cursor:pointer;align-self:flex-end;}
+
+/* MEETING */
+.meeting-card{background:#fff;border:1px solid #e8e8e4;border-radius:12px;padding:16px;margin-bottom:10px;}
+.meeting-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+.meeting-title{font-size:14px;font-weight:500;margin-bottom:4px;}
+.meeting-meta{font-size:12px;color:#888;margin-bottom:8px;}
+.meeting-note{font-size:13px;color:#666;line-height:1.6;}
+
+/* MODALS */
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);z-index:100;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal{background:#fff;border-radius:14px;padding:26px;width:440px;max-width:92vw;max-height:90vh;overflow-y:auto;}
+.modal h2{font-size:17px;font-weight:600;margin-bottom:18px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;}
+.btn-cancel{padding:9px 18px;border:1px solid #ddd;border-radius:8px;background:none;font-size:13px;cursor:pointer;color:#888;}
+.tg-info{background:#E6F1FB;border:1px solid #85B7EB;border-radius:8px;padding:12px 14px;font-size:12px;color:#185FA5;margin-bottom:16px;line-height:1.7;}
+.tg-info code{background:#fff;padding:2px 6px;border-radius:4px;font-size:11px;word-break:break-all;display:block;margin-top:4px;}
+.msg-preview{font-size:12px;color:#666;background:#f8f8f4;padding:10px 12px;border-radius:8px;margin-bottom:14px;line-height:1.6;white-space:pre-wrap;display:none;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:#1a1a1a;color:#fff;padding:11px 18px;border-radius:9px;font-size:13px;z-index:200;opacity:0;transition:opacity 0.25s;pointer-events:none;}
+.toast.show{opacity:1;}
+.empty{text-align:center;padding:50px;color:#aaa;font-size:13px;}
+
+@media(max-width:700px){
+  .sidebar{width:100%;position:relative;height:auto;border-right:none;border-bottom:1px solid #e8e8e4;}
+  .main{margin-left:0;padding:16px;}
+  .app{flex-direction:column;}
+  .stat-row{grid-template-columns:repeat(2,1fr);}
+  .task-actions{flex-wrap:wrap;}
+}
 </style>
 </head>
 <body>
-<div class="app">
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen" class="auth-wrap">
+  <div class="auth-box">
+    <div class="auth-logo">İş Takip</div>
+    <div class="auth-sub">Ekibinizle birlikte görevlerinizi yönetin</div>
+    <div class="auth-tabs">
+      <div class="auth-tab active" onclick="switchTab('login')">Giriş Yap</div>
+      <div class="auth-tab" onclick="switchTab('register')">Kayıt Ol</div>
+    </div>
+    <div id="login-form">
+      <div class="form-group"><label class="form-label">E-posta</label><input class="form-input" id="login-email" type="email" placeholder="ornek@sirket.com"/></div>
+      <div class="form-group"><label class="form-label">Şifre</label><input class="form-input" id="login-pass" type="password" placeholder="••••••••"/></div>
+      <button class="btn-full" onclick="doLogin()">Giriş Yap</button>
+    </div>
+    <div id="register-form" style="display:none;">
+      <div class="form-group"><label class="form-label">Ad Soyad</label><input class="form-input" id="reg-name" placeholder="Ahmet Yılmaz"/></div>
+      <div class="form-group"><label class="form-label">E-posta</label><input class="form-input" id="reg-email" type="email" placeholder="ornek@sirket.com"/></div>
+      <div class="form-group"><label class="form-label">Şifre</label><input class="form-input" id="reg-pass" type="password" placeholder="En az 6 karakter"/></div>
+      <button class="btn-full" onclick="doRegister()">Kayıt Ol</button>
+    </div>
+    <div class="auth-msg" id="auth-msg"></div>
+  </div>
+</div>
+
+<!-- APP SCREEN -->
+<div id="app-screen" class="app" style="display:none;">
   <div class="sidebar">
     <div class="sidebar-logo">İş Takip</div>
     <div class="nav-item active" id="nav-tasks" onclick="showView('tasks')">📋 Görevler</div>
@@ -83,8 +180,15 @@
     <div class="separator"></div>
     <div style="font-size:11px;color:#aaa;text-transform:uppercase;letter-spacing:0.5px;padding:0 10px;margin-bottom:6px;">Bağlantı</div>
     <div id="conn-status" style="font-size:12px;color:#aaa;padding:0 10px;">Bağlanıyor...</div>
+    <div class="user-info">
+      <div style="font-size:11px;color:#aaa;margin-bottom:4px;">Giriş yapan</div>
+      <div class="user-email" id="user-email-display"></div>
+      <button class="btn-logout" onclick="doLogout()">Çıkış Yap</button>
+    </div>
   </div>
+
   <div class="main">
+    <!-- TASKS VIEW -->
     <div id="view-tasks">
       <div class="header">
         <h1>Görevler</h1>
@@ -101,11 +205,16 @@
         <button class="filter-btn" onclick="setFilter('acil',this)">🔴 Acil</button>
         <button class="filter-btn" onclick="setFilter('orta',this)">🟡 Orta</button>
         <button class="filter-btn" onclick="setFilter('dusuk',this)">🟢 Düşük</button>
-        <button class="filter-btn" onclick="setFilter('active',this)">Devam edenler</button>
-        <button class="filter-btn" onclick="setFilter('done',this)">Tamamlananlar</button>
+        <button class="filter-btn" onclick="setFilter('beklemede',this)">⏳ Beklemede</button>
+        <button class="filter-btn" onclick="setFilter('devam',this)">🔄 Devam ediyor</button>
+        <button class="filter-btn" onclick="setFilter('tamamlandi',this)">✅ Tamamlandı</button>
+        <button class="filter-btn" onclick="setFilter('iptal',this)">❌ İptal</button>
+        <button class="filter-btn" onclick="setFilter('donus',this)">↩ Dönüş Bekleniyor</button>
       </div>
       <div id="task-list"><div class="empty">Yükleniyor...</div></div>
     </div>
+
+    <!-- MEETINGS VIEW -->
     <div id="view-meetings" style="display:none;">
       <div class="header">
         <h1>Toplantı Notları</h1>
@@ -116,21 +225,32 @@
   </div>
 </div>
 
-<!-- Task Modal -->
+<!-- TASK MODAL -->
 <div class="modal-overlay" id="taskModal">
   <div class="modal">
     <h2>Yeni Görev</h2>
-    <div class="form-group"><label class="form-label">Başlık</label><input class="form-input" id="f-title" placeholder="Görev adı..." /></div>
+    <div class="form-group"><label class="form-label">Başlık</label><input class="form-input" id="f-title" placeholder="Görev adı..."/></div>
     <div class="form-row">
-      <div class="form-group"><label class="form-label">Başlangıç</label><input class="form-input" type="date" id="f-start" /></div>
-      <div class="form-group"><label class="form-label">Deadline</label><input class="form-input" type="date" id="f-deadline" /></div>
+      <div class="form-group"><label class="form-label">Başlangıç</label><input class="form-input" type="date" id="f-start"/></div>
+      <div class="form-group"><label class="form-label">Deadline</label><input class="form-input" type="date" id="f-deadline"/></div>
     </div>
-    <div class="form-group"><label class="form-label">Öncelik</label>
-      <select class="form-input" id="f-priority">
-        <option value="acil">🔴 Acil</option>
-        <option value="orta" selected>🟡 Orta</option>
-        <option value="dusuk">🟢 Düşük</option>
-      </select>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Öncelik</label>
+        <select class="form-input" id="f-priority">
+          <option value="acil">🔴 Acil</option>
+          <option value="orta" selected>🟡 Orta</option>
+          <option value="dusuk">🟢 Düşük</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Durum</label>
+        <select class="form-input" id="f-status">
+          <option value="beklemede">⏳ Beklemede</option>
+          <option value="devam">🔄 Devam Ediyor</option>
+          <option value="donus">↩ Dönüş Bekleniyor</option>
+          <option value="tamamlandi">✅ Tamamlandı</option>
+          <option value="iptal">❌ İptal</option>
+        </select>
+      </div>
     </div>
     <div class="form-group"><label class="form-label">Not</label><textarea class="form-input" id="f-note" rows="2" placeholder="Açıklama..."></textarea></div>
     <div class="modal-actions">
@@ -140,13 +260,13 @@
   </div>
 </div>
 
-<!-- Meeting Modal -->
+<!-- MEETING MODAL -->
 <div class="modal-overlay" id="meetingModal">
   <div class="modal">
     <h2>Toplantı Notu</h2>
-    <div class="form-group"><label class="form-label">Başlık</label><input class="form-input" id="m-title" placeholder="Toplantı adı..." /></div>
-    <div class="form-group"><label class="form-label">Tarih</label><input class="form-input" type="date" id="m-date" /></div>
-    <div class="form-group"><label class="form-label">Katılımcılar</label><input class="form-input" id="m-people" placeholder="Ahmet, Betül..." /></div>
+    <div class="form-group"><label class="form-label">Başlık</label><input class="form-input" id="m-title" placeholder="Toplantı adı..."/></div>
+    <div class="form-group"><label class="form-label">Tarih</label><input class="form-input" type="date" id="m-date"/></div>
+    <div class="form-group"><label class="form-label">Katılımcılar</label><input class="form-input" id="m-people" placeholder="Ahmet, Betül..."/></div>
     <div class="form-group"><label class="form-label">Notlar</label><textarea class="form-input" id="m-note" rows="3" placeholder="Toplantıda konuşulanlar..."></textarea></div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal('meetingModal')">İptal</button>
@@ -155,19 +275,420 @@
   </div>
 </div>
 
+<!-- TELEGRAM MODAL -->
+<div class="modal-overlay" id="tgModal">
+  <div class="modal">
+    <h2>✈ Telegram'a Gönder</h2>
+    <div class="tg-info">
+      Mesajı kendi telefonunuza göndermek için Chat ID gereklidir.<br><br>
+      <b>Chat ID nasıl öğrenilir?</b><br>
+      1. Telegram'da botunuzu bulun ve <b>/start</b> yazın<br>
+      2. Şu adrese gidin ve <b>"id"</b> numarasını kopyalayın:<br>
+      <code>https://api.telegram.org/bot8632000680:AAGZ_vVX8KJCsU7obXp63zgcNYmk4_5JNTs/getUpdates</code>
+    </div>
+    <div class="form-group"><label class="form-label">Telegram Chat ID</label><input class="form-input" id="tg-chat-input" placeholder="Örn: 933023424"/></div>
+    <div class="msg-preview" id="tg-msg-preview"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('tgModal')">İptal</button>
+      <button class="btn-primary" onclick="confirmSendTelegram()">Gönder</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-const SUPABASE_URL = 'https://cvgxwpxvtxedajzrnand.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_cJp6p5cSfJwOynI5kCK_2Q_EPP4bijp';
-let sb, tasks = [], meetings = [], currentFilter = 'all', expandedId = null;
+const SUPABASE_URL='https://cvgxwpxvtxedajzrnand.supabase.co';
+const SUPABASE_KEY='sb_publishable_cJp6p5cSfJwOynI5kCK_2Q_EPP4bijp';
+const TG_TOKEN='8632000680:AAGZ_vVX8KJCsU7obXp63zgcNYmk4_5JNTs';
 
-async function init() {
-  try {
-    sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    const { error } = await sb.from('tasks').select('id').limit(1);
-    if (error) throw error;
-    document.getElementById('conn-status').innerHTML = '<span style="color:#3B6D11;">● Bağlandı</span>';
-    await loadTasks(); await loadMeetings();
-  } catch(e) {
-    document.getElementById('conn-status').innerHTML = '<span style="color:#A32D2D;">● Bağlantı hatası
+let sb,currentUser=null,tasks=[],meetings=[],comments={},assignees={},currentFilter='all',expandedId=null,pendingTgMsg=null;
+
+const STATUS_MAP={
+  beklemede:{label:'⏳ Beklemede',cls:'badge-gray'},
+  devam:{label:'🔄 Devam Ediyor',cls:'badge-blue'},
+  donus:{label:'↩ Dönüş Bekleniyor',cls:'badge-amber'},
+  tamamlandi:{label:'✅ Tamamlandı',cls:'badge-green'},
+  iptal:{label:'❌ İptal',cls:'badge-red'}
+};
+
+async function init(){
+  sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+  const {data:{session}}=await sb.auth.getSession();
+  if(session){
+    currentUser=session.user;
+    showApp();
+  } else {
+    document.getElementById('auth-screen').style.display='flex';
+  }
+  sb.auth.onAuthStateChange((_,session)=>{
+    if(session){ currentUser=session.user; showApp(); }
+    else { currentUser=null; showAuth(); }
+  });
+}
+
+function switchTab(tab){
+  document.getElementById('login-form').style.display=tab==='login'?'block':'none';
+  document.getElementById('register-form').style.display=tab==='register'?'block':'none';
+  document.querySelectorAll('.auth-tab').forEach((t,i)=>t.classList.toggle('active',(tab==='login'&&i===0)||(tab==='register'&&i===1)));
+  document.getElementById('auth-msg').textContent='';
+}
+
+async function doLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const pass=document.getElementById('login-pass').value;
+  const msg=document.getElementById('auth-msg');
+  msg.className='auth-msg';msg.textContent='Giriş yapılıyor...';
+  const {error}=await sb.auth.signInWithPassword({email,password:pass});
+  if(error){msg.className='auth-msg err';msg.textContent=error.message==='Invalid login credentials'?'E-posta veya şifre hatalı':error.message;}
+  else{msg.className='auth-msg ok';msg.textContent='Giriş başarılı!';}
+}
+
+async function doRegister(){
+  const name=document.getElementById('reg-name').value.trim();
+  const email=document.getElementById('reg-email').value.trim();
+  const pass=document.getElementById('reg-pass').value;
+  const msg=document.getElementById('auth-msg');
+  if(!name||!email||!pass){msg.className='auth-msg err';msg.textContent='Tüm alanları doldurun.';return;}
+  msg.className='auth-msg';msg.textContent='Kayıt yapılıyor...';
+  const {data,error}=await sb.auth.signUp({email,password:pass});
+  if(error){msg.className='auth-msg err';msg.textContent=error.message;return;}
+  if(data.user){
+    await sb.from('profiles').upsert({id:data.user.id,full_name:name});
+    msg.className='auth-msg ok';msg.textContent='Kayıt başarılı! Giriş yapılıyor...';
+  }
+}
+
+async function doLogout(){
+  await sb.auth.signOut();
+}
+
+function showApp(){
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('app-screen').style.display='flex';
+  document.getElementById('user-email-display').textContent=currentUser?.email||'';
+  document.getElementById('conn-status').innerHTML='<span style="color:#3B6D11;">● Bağlandı</span>';
+  loadTasks();loadMeetings();
+}
+
+function showAuth(){
+  document.getElementById('auth-screen').style.display='flex';
+  document.getElementById('app-screen').style.display='none';
+}
+
+async function loadTasks(){
+  const {data}=await sb.from('tasks').select('*').order('created_at',{ascending:false});
+  tasks=data||[];
+  await loadAllComments();
+  await loadAllAssignees();
+  renderTasks();
+}
+
+async function loadAllComments(){
+  const {data}=await sb.from('comments').select('*').order('created_at',{ascending:true});
+  comments={};
+  (data||[]).forEach(c=>{
+    if(!comments[c.task_id])comments[c.task_id]=[];
+    comments[c.task_id].push(c);
+  });
+}
+
+async function loadAllAssignees(){
+  const {data}=await sb.from('task_assignees').select('*');
+  assignees={};
+  (data||[]).forEach(a=>{
+    if(!assignees[a.task_id])assignees[a.task_id]=[];
+    assignees[a.task_id].push(a.user_email);
+  });
+}
+
+async function loadMeetings(){
+  const {data}=await sb.from('meetings').select('*').order('created_at',{ascending:false});
+  meetings=data||[];renderMeetings();
+}
+
+function dayDiff(ds){
+  if(!ds)return 999;
+  const d=new Date(ds),n=new Date();n.setHours(0,0,0,0);
+  return Math.ceil((d-n)/86400000);
+}
+function fmtDate(ds){
+  if(!ds)return '';
+  return new Date(ds).toLocaleDateString('tr-TR',{day:'numeric',month:'short'});
+}
+function fmtDateTime(ds){
+  if(!ds)return '';
+  return new Date(ds).toLocaleDateString('tr-TR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+}
+function priorityBadge(p){
+  if(p==='acil')return '<span class="badge badge-red">🔴 Acil</span>';
+  if(p==='orta')return '<span class="badge badge-amber">🟡 Orta</span>';
+  return '<span class="badge badge-green">🟢 Düşük</span>';
+}
+function statusBadge(s){
+  const st=STATUS_MAP[s]||STATUS_MAP['beklemede'];
+  return `<span class="badge ${st.cls}">${st.label}</span>`;
+}
+function deadlineLabel(dl,done){
+  if(done||!dl)return '';
+  const d=dayDiff(dl);
+  if(d<0)return `<span class="deadline urgent">⚠ ${Math.abs(d)} gün geçti</span>`;
+  if(d<=3)return `<span class="deadline urgent">⏰ ${d} gün kaldı (${fmtDate(dl)})</span>`;
+  return `<span class="deadline">📅 ${fmtDate(dl)}</span>`;
+}
+
+function renderTasks(){
+  const filtered=tasks.filter(t=>{
+    if(currentFilter==='tamamlandi')return t.status==='tamamlandi';
+    if(currentFilter==='iptal')return t.status==='iptal';
+    if(currentFilter==='beklemede')return t.status==='beklemede';
+    if(currentFilter==='devam')return t.status==='devam';
+    if(currentFilter==='donus')return t.status==='donus';
+    if(['acil','orta','dusuk'].includes(currentFilter))return t.priority===currentFilter;
+    return true;
+  });
+  document.getElementById('s-total').textContent=tasks.length;
+  document.getElementById('s-active').textContent=tasks.filter(t=>t.status==='devam').length;
+  document.getElementById('s-done').textContent=tasks.filter(t=>t.status==='tamamlandi').length;
+  document.getElementById('s-urgent').textContent=tasks.filter(t=>t.status!=='tamamlandi'&&t.status!=='iptal'&&dayDiff(t.deadline)<=3).length;
+
+  if(!filtered.length){document.getElementById('task-list').innerHTML='<div class="empty">Görev bulunamadı</div>';return;}
+
+  document.getElementById('task-list').innerHTML=filtered.map(t=>{
+    const taskComments=comments[t.id]||[];
+    const taskAssignees=assignees[t.id]||[];
+    const isDone=t.status==='tamamlandi'||t.status==='iptal';
+    return `
+    <div class="task-card ${expandedId===t.id?'expanded':''}">
+      <div class="task-top">
+        <div class="task-info" onclick="toggleExpand('${t.id}')">
+          <div class="task-title ${isDone?'done':''}" style="${isDone?'text-decoration:line-through;color:#aaa;':''}">${t.title}</div>
+          <div class="task-meta">
+            ${priorityBadge(t.priority)}
+            ${statusBadge(t.status||'beklemede')}
+            ${deadlineLabel(t.deadline,isDone)}
+            ${taskAssignees.length?taskAssignees.map(e=>`<span class="badge badge-purple">@${e.split('@')[0]}</span>`).join(''):''}
+            ${taskComments.length?`<span class="badge badge-gray">💬 ${taskComments.length}</span>`:''}
+          </div>
+        </div>
+        <div class="task-actions">
+          <button class="icon-btn ai-btn" onclick="aiResearch('${t.id}','${t.title.replace(/'/g,"\\'").replace(/"/g,'&quot;')}')">✦ Araştır</button>
+          <button class="icon-btn tg-btn" onclick="prepareTg('gorev','${t.title.replace(/'/g,"\\'").replace(/"/g,'&quot;')}','${t.deadline||''}','${t.priority}','${t.status||'beklemede'}')">✈</button>
+        </div>
+      </div>
+      <div class="task-detail ${expandedId===t.id?'show':''}">
+        <div class="ai-loading" id="ai-load-${t.id}">✦ AI araştırıyor...</div>
+        <div class="ai-result" id="ai-res-${t.id}"></div>
+
+        <div class="detail-label">Durum</div>
+        <div style="margin-bottom:12px;">
+          <select class="status-select" onchange="updateStatus('${t.id}',this.value)">
+            ${Object.entries(STATUS_MAP).map(([k,v])=>`<option value="${k}" ${(t.status||'beklemede')===k?'selected':''}>${v.label}</option>`).join('')}
+          </select>
+        </div>
+
+        <div class="detail-label">Kişi Etiketle</div>
+        <div class="assignees" id="assignees-${t.id}">
+          ${taskAssignees.map(e=>`<span class="assignee-tag">${e} <button onclick="removeAssignee('${t.id}','${e}')">✕</button></span>`).join('')}
+        </div>
+        <div class="assign-form">
+          <input class="assign-input" id="assign-input-${t.id}" placeholder="ornek@sirket.com" type="email"/>
+          <button class="assign-btn" onclick="addAssignee('${t.id}')">Ekle</button>
+        </div>
+
+        <div class="detail-label">Açıklama</div>
+        <div class="detail-note">${t.note||'Henüz not eklenmedi.'}</div>
+        <div class="detail-actions">
+          <button class="icon-btn" onclick="editNote('${t.id}','${(t.note||'').replace(/'/g,"\\'").replace(/\n/g,' ')}')">✏ Notu düzenle</button>
+          <button class="icon-btn" style="color:#A32D2D;" onclick="deleteTask('${t.id}')">✕ Sil</button>
+        </div>
+
+        <div class="detail-label">Yorumlar (${taskComments.length})</div>
+        <div class="comments-list">
+          ${taskComments.map(c=>`
+            <div class="comment">
+              <div class="comment-header">
+                <span class="comment-email">${c.user_email||'Bilinmeyen'}</span>
+                <span class="comment-time">${fmtDateTime(c.created_at)}</span>
+              </div>
+              <div class="comment-text">${c.content}</div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="comment-form">
+          <textarea class="comment-input" id="comment-${t.id}" rows="2" placeholder="Yorum yaz..."></textarea>
+          <button class="comment-btn" onclick="addComment('${t.id}')">Gönder</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderMeetings(){
+  if(!meetings.length){document.getElementById('meeting-list').innerHTML='<div class="empty">Henüz toplantı notu yok</div>';return;}
+  document.getElementById('meeting-list').innerHTML=meetings.map(m=>`
+    <div class="meeting-card">
+      <div class="meeting-top">
+        <div style="flex:1;">
+          <div class="meeting-title">${m.title}</div>
+          <div class="meeting-meta">📅 ${fmtDate(m.meeting_date)} · 👥 ${m.people||''}</div>
+          <div class="meeting-note">${m.note||''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
+          <button class="icon-btn tg-btn" onclick="prepareTg('toplanti','${m.title.replace(/'/g,"\\'").replace(/"/g,'&quot;')}','${m.meeting_date||''}','','','${(m.people||'').replace(/'/g,"\\'")}','${(m.note||'').replace(/'/g,"\\'").replace(/\n/g,' ').replace(/"/g,'&quot;')}')">✈ Telegram</button>
+          <button class="icon-btn" style="color:#A32D2D;" onclick="deleteMeeting('${m.id}')">✕ Sil</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleExpand(id){expandedId=expandedId===id?null:id;renderTasks();}
+
+async function updateStatus(id,status){
+  await sb.from('tasks').update({status}).eq('id',id);
+  const t=tasks.find(t=>t.id===id);if(t)t.status=status;
+  renderTasks();showToast('Durum güncellendi ✓');
+}
+
+async function addAssignee(taskId){
+  const input=document.getElementById('assign-input-'+taskId);
+  const email=input.value.trim();
+  if(!email)return;
+  await sb.from('task_assignees').upsert({task_id:taskId,user_email:email});
+  if(!assignees[taskId])assignees[taskId]=[];
+  if(!assignees[taskId].includes(email))assignees[taskId].push(email);
+  input.value='';renderTasks();expandedId=taskId;renderTasks();showToast('Kişi eklendi ✓');
+}
+
+async function removeAssignee(taskId,email){
+  await sb.from('task_assignees').delete().eq('task_id',taskId).eq('user_email',email);
+  if(assignees[taskId])assignees[taskId]=assignees[taskId].filter(e=>e!==email);
+  expandedId=taskId;renderTasks();
+}
+
+async function addComment(taskId){
+  const input=document.getElementById('comment-'+taskId);
+  const content=input.value.trim();
+  if(!content)return;
+  const {data}=await sb.from('comments').insert({task_id:taskId,user_id:currentUser.id,user_email:currentUser.email,content}).select().single();
+  if(data){
+    if(!comments[taskId])comments[taskId]=[];
+    comments[taskId].push(data);
+    input.value='';expandedId=taskId;renderTasks();
+  }
+}
+
+async function aiResearch(taskId,title){
+  const loadEl=document.getElementById('ai-load-'+taskId);
+  const resEl=document.getElementById('ai-res-'+taskId);
+  if(!loadEl||!resEl)return;
+  loadEl.style.display='block';resEl.style.display='none';resEl.innerHTML='';
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,messages:[{role:'user',content:`Bu iş görevi hakkında Türkçe kısa bir özet yaz ve ne yapılması gerektiğine dair 3-4 madde halinde pratik öneriler sun. Görev: "${title}". Yanıtın toplam 150 kelimeyi geçmesin.`}]})
+    });
+    const data=await res.json();
+    const text=data.content?.map(c=>c.text||'').join('')||'Sonuç alınamadı.';
+    loadEl.style.display='none';resEl.innerHTML=text.replace(/\n/g,'<br>');resEl.style.display='block';
+  }catch(e){
+    loadEl.style.display='none';resEl.textContent='AI bağlantı hatası. Tekrar deneyin.';resEl.style.display='block';
+  }
+}
+
+function prepareTg(type,title,date,priority,status,people='',note=''){
+  let msg='';
+  if(type==='gorev'){
+    const d=dayDiff(date);
+    const prioLabel=priority==='acil'?'🔴 Acil':priority==='orta'?'🟡 Orta':'🟢 Düşük';
+    const stLabel=STATUS_MAP[status]?.label||'';
+    let dlText=date?`\n📅 Deadline: ${fmtDate(date)}`:'';
+    if(date&&d<=3&&d>=0)dlText+=` (⏰ ${d} gün kaldı!)`;
+    if(date&&d<0)dlText+=` (⚠ ${Math.abs(d)} gün geçti!)`;
+    msg=`📋 Görev Hatırlatması\n\n${title}\n${prioLabel} · ${stLabel}${dlText}`;
+  }else{
+    msg=`📝 Toplantı Notu\n\n${title}\n📅 ${fmtDate(date)}\n👥 ${people}\n\n${note}`;
+  }
+  pendingTgMsg=msg;
+  const preview=document.getElementById('tg-msg-preview');
+  preview.textContent=msg;preview.style.display='block';
+  const saved=localStorage.getItem('tg_chat_id');
+  if(saved)document.getElementById('tg-chat-input').value=saved;
+  openModal('tgModal');
+}
+
+async function confirmSendTelegram(){
+  const chatId=document.getElementById('tg-chat-input').value.trim();
+  if(!chatId){showToast('Chat ID gerekli!');return;}
+  localStorage.setItem('tg_chat_id',chatId);
+  try{
+    const res=await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({chat_id:chatId,text:pendingTgMsg})
+    });
+    const data=await res.json();
+    if(data.ok){showToast("Telegram'a gönderildi ✓");closeModal('tgModal');}
+    else showToast('Hata: '+(data.description||'Bilinmeyen'));
+  }catch(e){showToast('Bağlantı hatası. Tekrar deneyin.');}
+}
+
+async function addTask(){
+  const title=document.getElementById('f-title').value.trim();
+  if(!title){alert('Görev başlığı gerekli!');return;}
+  await sb.from('tasks').insert({title,start_date:document.getElementById('f-start').value||null,deadline:document.getElementById('f-deadline').value||null,priority:document.getElementById('f-priority').value,status:document.getElementById('f-status').value,note:document.getElementById('f-note').value,done:false,user_id:currentUser.id});
+  closeModal('taskModal');
+  document.getElementById('f-title').value='';document.getElementById('f-note').value='';
+  showToast('Görev eklendi ✓');await loadTasks();
+}
+
+async function addMeeting(){
+  const title=document.getElementById('m-title').value.trim();
+  if(!title){alert('Başlık gerekli!');return;}
+  await sb.from('meetings').insert({title,meeting_date:document.getElementById('m-date').value||null,people:document.getElementById('m-people').value,note:document.getElementById('m-note').value,user_id:currentUser.id});
+  closeModal('meetingModal');
+  document.getElementById('m-title').value='';document.getElementById('m-note').value='';
+  showToast('Kaydedildi ✓');await loadMeetings();
+}
+
+async function editNote(id,cur){
+  const n=prompt('Notu güncelle:',cur);
+  if(n!==null){await sb.from('tasks').update({note:n}).eq('id',id);showToast('Güncellendi ✓');await loadTasks();expandedId=id;}
+}
+
+async function deleteTask(id){
+  if(!confirm('Bu görevi silmek istediğine emin misin?'))return;
+  await sb.from('tasks').delete().eq('id',id);expandedId=null;showToast('Silindi');await loadTasks();
+}
+
+async function deleteMeeting(id){
+  if(!confirm('Silinsin mi?'))return;
+  await sb.from('meetings').delete().eq('id',id);showToast('Silindi');await loadMeetings();
+}
+
+function setFilter(f,btn){
+  currentFilter=f;document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderTasks();
+}
+function showView(v){
+  document.getElementById('view-tasks').style.display=v==='tasks'?'block':'none';
+  document.getElementById('view-meetings').style.display=v==='meetings'?'block':'none';
+  document.getElementById('nav-tasks').classList.toggle('active',v==='tasks');
+  document.getElementById('nav-meetings').classList.toggle('active',v==='meetings');
+}
+function openModal(id){
+  document.getElementById(id).classList.add('show');
+  const today=new Date().toISOString().split('T')[0];
+  if(id==='taskModal'){document.getElementById('f-start').value=today;document.getElementById('f-deadline').value=today;}
+  if(id==='meetingModal')document.getElementById('m-date').value=today;
+}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+function showToast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+init();
+</script>
+</body>
+</html>
