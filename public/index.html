@@ -455,7 +455,8 @@ async function showApp(){
     data=r.data;
   }
   myProfile=data;
-  await sb.from('profiles').update({status:'online',last_seen:new Date().toISOString()}).eq('id',me.id);
+  await sb.from('profiles').update({status:'online',last_seen:new Date().toISOString(),email:me.email}).eq('id',me.id);
+  myProfile.email=me.email;
   myProfile.status='online';
   document.getElementById('sb-name').textContent=myProfile.full_name||me.email;
   document.getElementById('sb-email').textContent=me.email;
@@ -709,7 +710,7 @@ async function addAssigneeFromSelect(taskId){
   const sel=document.getElementById('ai-sel-'+taskId);
   const profileId=sel.value;if(!profileId)return;
   const profile=profiles.find(p=>p.id===profileId);if(!profile)return;
-  const email=profile.id;
+  const profileEmail=profile.email||'';
   const displayName=profile.full_name||profile.id.substring(0,8);
   const {error}=await sb.from('task_assignees').upsert({task_id:taskId,user_email:displayName});
   if(error){showToast('Hata: '+error.message);return;}
@@ -718,8 +719,8 @@ async function addAssigneeFromSelect(taskId){
   sel.value='';expandedId=taskId;renderTasks();showToast('Kişi eklendi ✓');
   // E-posta bildirimi gönder
   const task=tasks.find(t=>t.id===taskId);
-  if(profile.id&&profile.id.includes('@')){
-    sendEmail('assigned',profile.id,task?.title||'',me.email,task?.deadline,task?.priority);
+  if(profileEmail&&profileEmail.includes('@')){
+    sendEmail('assigned',profileEmail,task?.title||'',me.email,task?.deadline,task?.priority);
   }
 }
 
@@ -820,6 +821,12 @@ async function addTask(){
     const checked=Array.from(document.querySelectorAll('#f-assigned-list input:checked')).map(cb=>cb.value);
     for(const name of checked){
       await sb.from('task_assignees').insert({task_id:task.id,user_email:name});
+      // Mail gönder
+      const assigneeProfile=profiles.find(p=>(p.full_name||p.id)===name);
+      const assigneeEmail=assigneeProfile?.email||'';
+      if(assigneeEmail&&assigneeEmail.includes('@')){
+        sendEmail('assigned',assigneeEmail,task.title,me.email,task.deadline,task.priority);
+      }
     }
   }
   if(task&&selectedFiles.length){
