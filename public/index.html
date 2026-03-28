@@ -669,7 +669,7 @@ async function loadTasks(){
 async function loadMeetings(){const {data}=await sb.from('meetings').select('*').order('created_at',{ascending:false});meetings=data||[];renderMeetings();}
 async function loadProfiles(){const {data}=await sb.from('profiles').select('*');profiles=data||[];renderUsers();}
 async function loadTeams(){
-  const {data}=await sb.from('teams').select('*').order('created_at',{ascending:false}).catch(()=>({data:[]}));
+  const {data}=await sb.from('teams').select('*').order('created_at',{ascending:false});
   teams=data||[];renderTeams();
   const sel=document.getElementById('f-team');
   sel.innerHTML='<option value="">Ekip seçin...</option>';
