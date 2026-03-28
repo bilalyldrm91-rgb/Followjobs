@@ -1622,7 +1622,13 @@ function renderDashboard(){
   const urgent=active.filter(t=>dayDiff(t.deadline)<=3&&dayDiff(t.deadline)>=0).length;
   const overdue=active.filter(t=>dayDiff(t.deadline)<0).length;
   const pStats={};
-  Object.entries(assignees).forEach(([tid,names])=>{const t=filteredTasks.find(t=>t.id===tid);if(!t)return;names.forEach(n=>{if(!pStats[n])pStats[n]={total:0,done:0};pStats[n].total++;if(t.status==='tamamlandi')pStats[n].done++;});});
+  Object.entries(assignees).forEach(([tid,names])=>{const t=filteredTasks.find(t=>t.id===tid);if(!t)return;names.forEach(rawName=>{
+    // email ise profiles'dan full_name bul
+    const profile=profiles.find(p=>p.email===rawName||p.full_name===rawName);
+    const displayName=profile?.full_name||rawName;
+    if(!pStats[displayName])pStats[displayName]={total:0,done:0};
+    pStats[displayName].total++;if(t.status==='tamamlandi')pStats[displayName].done++;
+  });});
   const top=Object.entries(pStats).sort((a,b)=>b[1].total-a[1].total).slice(0,6);
   const maxC=Math.max(...Object.values(STATUS_MAP).map((_,i)=>filteredTasks.filter(t=>t.status===Object.keys(STATUS_MAP)[i]).length),1);
   document.getElementById('dashboard-content').innerHTML=`
