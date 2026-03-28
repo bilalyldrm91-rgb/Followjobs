@@ -351,7 +351,7 @@ body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--gra
 .archived-card{background:#fff;border:1.5px solid var(--gray-200);border-radius:var(--radius-lg);padding:12px 14px;margin-bottom:8px;opacity:0.75;}
 
 /* PROFILE */
-.profile-card{background:#fff;border:1.5px solid var(--gray-200);border-radius:var(--radius-lg);padding:28px;max-width:480px;}
+.profile-card{background:#fff;border:1.5px solid var(--gray-200);border-radius:var(--radius-lg);padding:28px;max-width:520px;}
 
 /* MODALS */
 .modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:100;align-items:center;justify-content:center;backdrop-filter:blur(2px);}
@@ -442,6 +442,10 @@ body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--gra
   <div class="sidebar">
     <div class="sidebar-logo">Nexdo <div class="realtime-dot" id="rt-dot" style="display:none;"></div></div>
 
+    <div class="nav-item" id="nav-notifications" onclick="showView('notifications')"><span class="nav-icon">🔔</span> Bildirimler <span class="nav-badge" id="notif-badge" style="display:none;">0</span></div>
+
+    <div class="nav-sep"></div>
+
     <div class="nav-item" id="nav-dashboard" onclick="showView('dashboard')"><span class="nav-icon">📊</span> Dashboard</div>
 
     <div class="nav-sep"></div>
@@ -462,7 +466,6 @@ body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--gra
 
     <div class="nav-item" id="nav-calendar" onclick="showView('calendar')"><span class="nav-icon">📅</span> Takvim</div>
     <div class="nav-item" id="nav-chat" onclick="showView('chat')"><span class="nav-icon">💬</span> Chat <span class="nav-badge" id="chat-badge" style="display:none;">!</span></div>
-    <div class="nav-item" id="nav-notifications" onclick="showView('notifications')"><span class="nav-icon">🔔</span> Bildirimler <span class="nav-badge" id="notif-badge" style="display:none;">0</span></div>
     <div class="nav-item" id="nav-meetings" onclick="showView('meetings')"><span class="nav-icon">📝</span> Toplantılar</div>
 
     <div class="nav-sep"></div>
@@ -749,20 +752,27 @@ body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--gra
       <div class="perm-row"><span>Kendi görevini düzenleme</span><button class="toggle off" id="perm-task_edit_own" onclick="togglePerm(this)"></button></div>
       <div class="perm-row"><span>Herkesnin görevini düzenleme</span><button class="toggle off" id="perm-task_edit_all" onclick="togglePerm(this)"></button></div>
       <div class="perm-row"><span>Görevi arşivleme</span><button class="toggle off" id="perm-task_archive" onclick="togglePerm(this)"></button></div>
+      <div class="perm-row"><span>Arşivden geri alma</span><button class="toggle off" id="perm-task_restore" onclick="togglePerm(this)"></button></div>
       <div class="perm-row"><span>Durum değiştirme</span><button class="toggle off" id="perm-task_status_change" onclick="togglePerm(this)"></button></div>
       <div class="perm-row"><span>Kişi atama</span><button class="toggle off" id="perm-task_assign" onclick="togglePerm(this)"></button></div>
+      <div class="perm-row"><span>Yorum yapma</span><button class="toggle off" id="perm-task_comment" onclick="togglePerm(this)"></button></div>
       <div class="perm-section-title">Toplantılar</div>
       <div class="perm-row"><span>Toplantı oluşturma</span><button class="toggle off" id="perm-meeting_create" onclick="togglePerm(this)"></button></div>
+      <div class="perm-row"><span>Toplantı düzenleme</span><button class="toggle off" id="perm-meeting_edit" onclick="togglePerm(this)"></button></div>
       <div class="perm-row"><span>Toplantı silme</span><button class="toggle off" id="perm-meeting_delete" onclick="togglePerm(this)"></button></div>
       <div class="perm-section-title">Yönetim</div>
       <div class="perm-row"><span>Ekip yönetimi</span><button class="toggle off" id="perm-team_manage" onclick="togglePerm(this)"></button></div>
-      <div class="perm-row"><span>Kullanıcı yönetimi</span><button class="toggle off" id="perm-user_manage" onclick="togglePerm(this)"></button></div>
-      <div class="perm-row"><span>Rol yönetimi</span><button class="toggle off" id="perm-role_manage" onclick="togglePerm(this)"></button></div>
+      <div class="perm-row"><span>Kullanıcı rol yönetimi</span><button class="toggle off" id="perm-user_manage" onclick="togglePerm(this)"></button></div>
       <div class="perm-row"><span>Kullanıcı ekleme</span><button class="toggle off" id="perm-user_invite" onclick="togglePerm(this)"></button></div>
+      <div class="perm-row"><span>Kullanıcı silme</span><button class="toggle off" id="perm-user_delete" onclick="togglePerm(this)"></button></div>
+      <div class="perm-row"><span>Rol yönetimi</span><button class="toggle off" id="perm-role_manage" onclick="togglePerm(this)"></button></div>
       <div class="perm-section-title">Diğer</div>
+      <div class="perm-row"><span>Chat kullanma</span><button class="toggle off" id="perm-chat_use" onclick="togglePerm(this)"></button></div>
       <div class="perm-row"><span>Telegram bildirimi</span><button class="toggle off" id="perm-telegram_send" onclick="togglePerm(this)"></button></div>
       <div class="perm-row"><span>AI araştır</span><button class="toggle off" id="perm-ai_research" onclick="togglePerm(this)"></button></div>
       <div class="perm-row"><span>Dosya yükleme</span><button class="toggle off" id="perm-file_upload" onclick="togglePerm(this)"></button></div>
+      <div class="perm-row"><span>Dashboard görüntüleme</span><button class="toggle off" id="perm-dashboard_view" onclick="togglePerm(this)"></button></div>
+      <div class="perm-row"><span>Bildirimler</span><button class="toggle off" id="perm-notification_view" onclick="togglePerm(this)"></button></div>
     </div>
     <div class="modal-actions"><button class="btn-cancel" onclick="closeModal('roleModal')">İptal</button><button class="btn-primary" onclick="saveRole()">Kaydet</button></div>
   </div>
@@ -824,8 +834,8 @@ const SB_KEY='sb_publishable_cJp6p5cSfJwOynI5kCK_2Q_EPP4bijp';
 const TG_TOKEN='8632000680:AAGZ_vVX8KJCsU7obXp63zgcNYmk4_5JNTs';
 const STATUS_MAP={beklemede:{l:'⏳ Beklemede',c:'badge-gray'},devam:{l:'🔄 Devam Ediyor',c:'badge-blue'},donus:{l:'↩ Dönüş Bekleniyor',c:'badge-amber'},tamamlandi:{l:'✅ Tamamlandı',c:'badge-green'},iptal:{l:'❌ İptal',c:'badge-red'}};
 const ACTIVE=['beklemede','devam','donus'];
-const PERM_KEYS=['task_create','task_edit_own','task_edit_all','task_archive','task_status_change','task_assign','meeting_create','meeting_delete','team_manage','user_manage','role_manage','user_invite','telegram_send','ai_research','file_upload'];
-const PERM_LABELS={task_create:'Görev oluşturma',task_edit_own:'Kendi görevini düzenleme',task_edit_all:'Herkesnin görevini düzenleme',task_archive:'Görevi arşivleme',task_status_change:'Durum değiştirme',task_assign:'Kişi atama',meeting_create:'Toplantı oluşturma',meeting_delete:'Toplantı silme',team_manage:'Ekip yönetimi',user_manage:'Kullanıcı yönetimi',role_manage:'Rol yönetimi',user_invite:'Kullanıcı ekleme',telegram_send:'Telegram bildirimi',ai_research:'AI araştır',file_upload:'Dosya yükleme'};
+const PERM_KEYS=['task_create','task_edit_own','task_edit_all','task_archive','task_restore','task_status_change','task_assign','task_comment','meeting_create','meeting_edit','meeting_delete','team_manage','user_manage','user_invite','user_delete','role_manage','chat_use','telegram_send','ai_research','file_upload','dashboard_view','notification_view'];
+const PERM_LABELS={task_create:'Görev oluşturma',task_edit_own:'Kendi görevini düzenleme',task_edit_all:'Herkesnin görevini düzenleme',task_archive:'Görevi arşivleme',task_restore:'Arşivden geri alma',task_status_change:'Durum değiştirme',task_assign:'Kişi atama',task_comment:'Yorum yapma',meeting_create:'Toplantı oluşturma',meeting_edit:'Toplantı düzenleme',meeting_delete:'Toplantı silme',team_manage:'Ekip yönetimi',user_manage:'Kullanıcı rol yönetimi',user_invite:'Kullanıcı ekleme',user_delete:'Kullanıcı silme',role_manage:'Rol yönetimi',chat_use:'Chat kullanma',telegram_send:'Telegram bildirimi',ai_research:'AI araştır',file_upload:'Dosya yükleme',dashboard_view:'Dashboard görüntüleme',notification_view:'Bildirimler'};
 const AVC=['#EEF2FF','#F0FDF4','#FFFBEB','#FFF1F2','#EFF6FF'];
 const AVT=['#4338CA','#166534','#92400E','#9F1239','#1D4ED8'];
 const PAGE_SIZE=15;
@@ -1045,7 +1055,7 @@ async function loadArchive(){
   const {data}=await sb.from('tasks').select('*').or('archived.eq.true,status.eq.iptal').order('created_at',{ascending:false});
   const el=document.getElementById('archive-list');
   if(!data?.length){el.innerHTML='<div class="empty"><div class="empty-icon">🗄</div>Arşiv boş</div>';return;}
-  el.innerHTML=data.map(t=>`<div class="archived-card"><div style="font-size:13px;font-weight:600;color:var(--gray-500);text-decoration:line-through;margin-bottom:5px;">${t.title}</div><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${pBadge(t.priority)}${sBadge(t.status)}${t.archived?'<span class="badge badge-gray">🗄 Arşiv</span>':''}${t.deadline?`<span style="font-size:11px;color:var(--gray-400);">📅 ${fmtDate(t.deadline)}</span>`:''}${can('task_archive')?`<button class="icon-btn" style="margin-left:auto;font-size:11px;" onclick="restoreTask('${t.id}')">↩ Geri Al</button>`:''}</div></div>`).join('');
+  el.innerHTML=data.map(t=>`<div class="archived-card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;"><div style="font-size:13px;font-weight:600;color:var(--gray-500);text-decoration:line-through;">${t.title}</div><button class="btn-secondary" style="font-size:12px;padding:5px 12px;" onclick="restoreTask('${t.id}')">↩ Geri Al</button></div><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${pBadge(t.priority)}${sBadge(t.status)}${t.archived?'<span class="badge badge-gray">🗄 Arşiv</span>':''}${t.start_date?`<span style="font-size:11px;color:var(--gray-400);">📌 ${fmtDate(t.start_date)}</span>`:''}${t.deadline?`<span style="font-size:11px;color:var(--gray-400);">📅 ${fmtDate(t.deadline)}</span>`:''}</div></div>`).join('');
 }
 
 // UTILS
@@ -1150,7 +1160,7 @@ function renderTaskCard(t,q=''){
     <div class="task-card-header" onclick="toggleExpand('${t.id}')">
       <div class="task-info">
         <div class="task-title">${highlight(t.title,q)}</div>
-        <div class="task-meta">${pBadge(t.priority)}${sBadge(t.status||'beklemede')}${dlLabel(t.deadline)}${ta.map(e=>`<span class="badge badge-purple">@${e}</span>`).join('')}${tc.length?`<span class="badge badge-gray">💬 ${tc.length}</span>`:''}</div>
+        <div class="task-meta">${pBadge(t.priority)}${sBadge(t.status||'beklemede')}${t.start_date?`<span class="deadline">📌 ${fmtDate(t.start_date)}</span>`:''}${dlLabel(t.deadline)}${ta.map(e=>`<span class="badge badge-purple">@${e}</span>`).join('')}${tc.length?`<span class="badge badge-gray">💬 ${tc.length}</span>`:''}</div>
       </div>
       <div class="task-btns">
         ${can('ai_research')?`<button class="icon-btn btn-ai" onclick="event.stopPropagation();aiResearch('${t.id}','${st}')">✦ AI</button>`:''}
