@@ -258,6 +258,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .empty{text-align:center;padding:48px;color:#aaa;font-size:13px;}
 .empty-icon{font-size:32px;margin-bottom:8px;}
 .highlight{background:#fff3cd;border-radius:2px;}
+.nav-subitem{padding:6px 10px;border-radius:7px;cursor:pointer;font-size:12px;color:#666;margin-bottom:1px;display:flex;align-items:center;gap:6px;}
+.nav-subitem:hover{background:#f5f5f0;}
+.nav-subitem.active-sub{background:#f0f0ea;color:#1a1a1a;font-weight:500;}
+/* CHAT FONT SETTINGS */
+.chat-settings-bar{display:flex;align-items:center;gap:12px;padding:8px 16px;border-bottom:1px solid #f0f0ea;background:#fafaf8;flex-wrap:wrap;}
+.chat-settings-bar label{font-size:11px;color:#888;}
+.chat-settings-bar select,.chat-settings-bar input[type=range]{font-size:12px;}
+.chat-font-preview{font-size:11px;color:#aaa;margin-left:4px;}
 /* PROFILE */
 .profile-card{background:#fff;border:1px solid #e8e8e4;border-radius:14px;padding:28px;max-width:480px;}
 .profile-avatar-big{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;margin-bottom:16px;}
@@ -322,7 +330,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div id="app-screen" class="app" style="display:none;">
   <div class="sidebar">
     <div class="sidebar-logo">Nexdo <div class="realtime-dot" id="rt-dot"></div></div>
-    <div class="nav-item active" id="nav-tasks" onclick="showView('tasks')">📋 Görevler</div>
+    <div class="nav-item" id="nav-tasks" onclick="toggleTaskMenu()">📋 Görevler <span id="task-menu-arrow" style="margin-left:auto;font-size:10px;transition:transform 0.2s;">▶</span></div>
+    <div id="task-submenu" style="display:none;padding-left:10px;margin-bottom:4px;">
+      <div class="nav-subitem" id="sub-all" onclick="showTaskStatus('all')">📋 Tümü</div>
+      <div class="nav-subitem" id="sub-beklemede" onclick="showTaskStatus('beklemede')">⏳ Beklemede</div>
+      <div class="nav-subitem" id="sub-devam" onclick="showTaskStatus('devam')">🔄 Devam Ediyor</div>
+      <div class="nav-subitem" id="sub-donus" onclick="showTaskStatus('donus')">↩ Dönüş Bekleniyor</div>
+      <div class="nav-subitem" id="sub-tamamlandi" onclick="showTaskStatus('tamamlandi')">✅ Tamamlandı</div>
+      <div class="nav-subitem" id="sub-iptal" onclick="showTaskStatus('iptal')">❌ İptal</div>
+    </div>
     <div class="nav-item" id="nav-dashboard" onclick="showView('dashboard')">📊 Dashboard</div>
     <div class="nav-item" id="nav-calendar" onclick="showView('calendar')">📅 Takvim</div>
     <div class="nav-item" id="nav-chat" onclick="showView('chat')">💬 Chat <span class="nav-badge" id="chat-badge" style="display:none;">0</span></div>
@@ -410,12 +426,36 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         </div>
         <div class="chat-main">
           <div class="chat-main-header">
-            <div>
+            <div style="flex:1;">
               <div class="chat-main-title" id="chat-channel-name">Kanal seçin</div>
               <div class="chat-main-sub" id="chat-channel-sub"></div>
             </div>
+            <button class="icon-btn" onclick="toggleChatSettings()" title="Görünüm Ayarları">⚙ Yazı Ayarları</button>
           </div>
-          <div class="chat-messages" id="chat-messages"></div>
+          <div class="chat-settings-bar" id="chat-settings-bar" style="display:none;">
+          <label>Yazı Tipi:
+            <select id="chat-font-select" onchange="applyChatFont()" style="margin-left:4px;padding:2px 6px;border:1px solid #ddd;border-radius:5px;font-size:12px;">
+              <option value="system-ui,-apple-system">Sistem (Varsayılan)</option>
+              <option value="Georgia,serif">Georgia (Serif)</option>
+              <option value="'Courier New',monospace">Courier (Mono)</option>
+              <option value="Arial,sans-serif">Arial</option>
+              <option value="'Times New Roman',serif">Times New Roman</option>
+            </select>
+          </label>
+          <label>Boyut:
+            <input type="range" id="chat-font-size" min="11" max="18" value="13" oninput="applyChatFont()" style="width:80px;margin:0 4px;">
+            <span class="chat-font-preview" id="chat-font-size-label">13px</span>
+          </label>
+          <label>Renk:
+            <input type="color" id="chat-font-color-mine" value="#ffffff" oninput="applyChatFont()" title="Kendi mesaj rengi" style="width:28px;height:24px;border:none;cursor:pointer;border-radius:4px;">
+            <span style="font-size:11px;color:#aaa;">Benim</span>
+          </label>
+          <label>
+            <input type="color" id="chat-font-color-other" value="#1a1a1a" oninput="applyChatFont()" title="Diğer mesaj rengi" style="width:28px;height:24px;border:none;cursor:pointer;border-radius:4px;">
+            <span style="font-size:11px;color:#aaa;">Diğerleri</span>
+          </label>
+        </div>
+        <div class="chat-messages" id="chat-messages"></div>
           <div class="chat-input-row" id="chat-input-area" style="display:none;">
             <div style="flex:1;position:relative;">
               <textarea class="chat-input-full" id="chat-input" placeholder="Mesaj yaz... @ ile kişi etiketle" rows="1" onkeydown="chatKeyDown(event)" onkeyup="handleChatMention(event)"></textarea>
@@ -691,6 +731,7 @@ async function afterLogin(){
   await Promise.all([loadTasks(),loadMeetings(),loadProfiles(),loadTeams(),loadChannels()]);
   setupRealtime();
   showScreen('app');
+  showView('dashboard');
   if(statusInterval)clearInterval(statusInterval);
   statusInterval=setInterval(()=>sb.from('profiles').update({last_seen:new Date().toISOString()}).eq('id',me.id),30000);
 }
@@ -961,7 +1002,7 @@ function renderUsers(){
           <td style="font-size:12px;color:#888;">${p.email||'—'}</td>
           <td>${roleObj?`<span style="background:${roleObj.color}22;color:${roleObj.color};padding:2px 9px;border-radius:10px;font-size:11px;font-weight:500;">${roleObj.name}</span>`:'<span class="badge badge-gray">Atanmamış</span>'}</td>
           <td>${statusIcon(p.status||'offline')}</td>
-          <td>${can('user_manage')?`<button class="icon-btn" onclick="openAssignRoleModal('${p.id}','${(p.full_name||'').replace(/'/g,"\\'")}','${p.role_id||''}')">✏ Rol Ata</button>`:'—'}</td>
+          <td style="display:flex;gap:4px;">${can('user_manage')?`<button class="icon-btn" onclick="openAssignRoleModal('${p.id}','${(p.full_name||'').replace(/'/g,"\'")}','${p.role_id||''}')">✏ Rol Ata</button><button class="icon-btn" onclick="editUserInfo('${p.id}','${(p.full_name||'').replace(/'/g,"\'")}')">✎ Düzenle</button>`:'—'}</td>
         </tr>`;
       }).join('')}</tbody>
     </table>
@@ -1086,6 +1127,8 @@ function renderChannelList(){
 }
 
 async function selectChannel(channelId){
+  initChatFont();
+  document.getElementById('chat-settings-bar').style.display='none';
   currentChannel=channels.find(c=>c.id===channelId);
   document.getElementById('chat-channel-name').textContent=(currentChannel.type==='channel'?'#':'')+currentChannel.name;
   document.getElementById('chat-channel-sub').textContent=currentChannel.type==='channel'?'Genel kanal':'Direkt mesaj';
@@ -1523,6 +1566,9 @@ function showView(v){
     const el=document.getElementById('view-'+n);if(el)el.style.display=n===v?'block':'none';
     const nav=document.getElementById('nav-'+n);if(nav)nav.classList.toggle('active',n===v);
   });
+  // tasks alt menü
+  const tMenu=document.getElementById('task-submenu');
+  if(tMenu)tMenu.style.display=v==='tasks'?'block':'none';
   if(v==='dashboard')renderDashboard();
   if(v==='calendar')renderCalendar();
   if(v==='chat'){loadChannels();}
@@ -1567,6 +1613,122 @@ document.addEventListener('click',function(e){
   document.querySelectorAll('.mention-dropdown').forEach(dd=>{if(!dd.contains(e.target)&&!e.target.classList.contains('comment-input')&&!e.target.classList.contains('chat-input-full'))dd.style.display='none';});
   document.querySelectorAll('.modal-overlay').forEach(m=>{if(e.target===m)m.classList.remove('show');});
 });
+
+// GÖREV MENÜSÜ
+let taskMenuOpen = false;
+function toggleTaskMenu(){
+  taskMenuOpen = !taskMenuOpen;
+  const menu = document.getElementById('task-submenu');
+  const arrow = document.getElementById('task-menu-arrow');
+  const navTasks = document.getElementById('nav-tasks');
+  if(menu) menu.style.display = taskMenuOpen ? 'block' : 'none';
+  if(arrow) arrow.style.transform = taskMenuOpen ? 'rotate(90deg)' : '';
+  if(taskMenuOpen){
+    showView('tasks');
+    navTasks.classList.add('active');
+  }
+}
+
+function showTaskStatus(status){
+  document.querySelectorAll('.nav-subitem').forEach(el => el.classList.remove('active-sub'));
+  const sub = document.getElementById('sub-' + status);
+  if(sub) sub.classList.add('active-sub');
+  showView('tasks');
+  document.getElementById('nav-tasks').classList.add('active');
+  // Filtre uygula
+  if(status === 'all'){
+    // Tüm aktif görevler
+    currentFilter = 'all';
+    currentPage = 1;
+    // Ana sayfa filtresi - arşiv ve tamamlandı/iptal hariç
+    renderTasksForStatus(null);
+  } else if(['tamamlandi','iptal'].includes(status)){
+    // Bu statüler için arşivden de göster
+    renderTasksForStatus(status);
+  } else {
+    currentFilter = status;
+    currentPage = 1;
+    renderTasksForStatus(status);
+  }
+}
+
+function renderTasksForStatus(status){
+  const q = (document.getElementById('task-search')?.value||'').toLowerCase().trim();
+  let filtered;
+  if(!status || status === 'all'){
+    filtered = sortTasks(tasks.filter(t => !t.archived && ACTIVE_STATUSES.includes(t.status||'beklemede') && (!q || t.title.toLowerCase().includes(q))));
+  } else if(['tamamlandi','iptal'].includes(status)){
+    filtered = tasks.filter(t => t.status === status && (!q || t.title.toLowerCase().includes(q)));
+  } else {
+    filtered = sortTasks(tasks.filter(t => !t.archived && (t.status||'beklemede') === status && (!q || t.title.toLowerCase().includes(q))));
+  }
+  
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  if(currentPage > totalPages && totalPages > 0) currentPage = totalPages;
+  const paged = filtered.slice((currentPage-1)*PAGE_SIZE, currentPage*PAGE_SIZE);
+  
+  document.getElementById('s-total').textContent = tasks.filter(t=>!t.archived&&ACTIVE_STATUSES.includes(t.status||'beklemede')).length;
+  document.getElementById('s-active').textContent = tasks.filter(t=>t.status==='devam').length;
+  document.getElementById('s-done').textContent = tasks.filter(t=>t.status==='tamamlandi').length;
+  document.getElementById('s-urgent').textContent = tasks.filter(t=>!t.archived&&ACTIVE_STATUSES.includes(t.status||'beklemede')&&dayDiff(t.deadline)<=3&&dayDiff(t.deadline)>=0).length;
+
+  if(!paged.length){
+    document.getElementById('task-list').innerHTML = '<div class="empty"><div class="empty-icon">📋</div>Bu kategoride görev yok</div>';
+    document.getElementById('task-pagination').innerHTML = '';
+    return;
+  }
+  document.getElementById('task-list').innerHTML = paged.map(t => renderTaskCard(t, q)).join('');
+  document.getElementById('task-pagination').innerHTML = totalPages > 1 ? 
+    '<div class="pagination">'+Array.from({length:totalPages},(_,i)=>`<button class="page-btn ${i+1===currentPage?'active':''}" onclick="currentPage=${i+1};renderTasksForStatus('${status||'all'}')">${i+1}</button>`).join('')+'<span style="font-size:12px;color:#aaa;margin-left:8px;">'+filtered.length+' görev</span></div>' : '';
+}
+
+// CHAT FONT AYARLARI
+let chatFontSettings = JSON.parse(localStorage.getItem('nexdo_chat_font') || '{"font":"system-ui,-apple-system","size":13,"colorMine":"#ffffff","colorOther":"#1a1a1a"}');
+
+function toggleChatSettings(){
+  const bar = document.getElementById('chat-settings-bar');
+  if(bar) bar.style.display = bar.style.display === 'none' ? 'flex' : 'none';
+}
+
+function applyChatFont(){
+  const font = document.getElementById('chat-font-select')?.value || chatFontSettings.font;
+  const size = parseInt(document.getElementById('chat-font-size')?.value || chatFontSettings.size);
+  const colorMine = document.getElementById('chat-font-color-mine')?.value || chatFontSettings.colorMine;
+  const colorOther = document.getElementById('chat-font-color-other')?.value || chatFontSettings.colorOther;
+  const label = document.getElementById('chat-font-size-label');
+  if(label) label.textContent = size + 'px';
+  chatFontSettings = {font, size, colorMine, colorOther};
+  localStorage.setItem('nexdo_chat_font', JSON.stringify(chatFontSettings));
+  // CSS değişkenlerini uygula
+  const style = document.getElementById('chat-font-style') || (() => {
+    const s = document.createElement('style');s.id='chat-font-style';document.head.appendChild(s);return s;
+  })();
+  style.textContent = `.chat-bubble-full{font-family:${font}!important;font-size:${size}px!important;line-height:1.6!important;}.chat-msg-full.mine .chat-bubble-full{color:${colorMine}!important;}.chat-msg-full:not(.mine) .chat-bubble-full{color:${colorOther}!important;}.chat-bubble{font-family:${font}!important;font-size:${size}px!important;}.chat-msg.mine .chat-bubble{color:${colorMine}!important;}.chat-msg:not(.mine) .chat-bubble{color:${colorOther}!important;}`;
+}
+
+function initChatFont(){
+  const fs = document.getElementById('chat-font-select');
+  const fsz = document.getElementById('chat-font-size');
+  const cm = document.getElementById('chat-font-color-mine');
+  const co = document.getElementById('chat-font-color-other');
+  if(fs) fs.value = chatFontSettings.font;
+  if(fsz) fsz.value = chatFontSettings.size;
+  if(cm) cm.value = chatFontSettings.colorMine;
+  if(co) co.value = chatFontSettings.colorOther;
+  applyChatFont();
+}
+
+// KULLANICI DÜZENLEME (Admin)
+async function editUserInfo(uid, currentName, currentEmail){
+  const newName = prompt('Ad Soyad:', currentName);
+  if(newName === null) return;
+  const newEmail = prompt('E-posta:', currentEmail);
+  if(newEmail === null) return;
+  const {error} = await sb.from('profiles').update({full_name:newName, email:newEmail}).eq('id', uid);
+  if(error){showToast('Hata: '+error.message, 'err');return;}
+  showToast('Kullanıcı güncellendi ✓', 'ok');
+  await loadProfiles();
+}
 
 init();
 </script>
